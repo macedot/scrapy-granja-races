@@ -1,2 +1,2 @@
 # scrapyGranja
-Scrapy implementation of Kartodromo Granja Viana go-kart race results
+A web scrapper implementation for Kartodromo Granja Viana go-kart race results using Scrapy
