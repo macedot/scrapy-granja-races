@@ -55,7 +55,7 @@ class GranjaRacesItem(scrapy.Item):
         output_processor=TakeFirst(),
     )
 	driverName = scrapy.Field(
-        input_processor=MapCompose(str),
+        input_processor=MapCompose(unicode.strip),
         output_processor=TakeFirst(),
     )
 	driverClass = scrapy.Field(
