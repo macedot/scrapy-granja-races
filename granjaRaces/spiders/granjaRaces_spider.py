@@ -8,9 +8,9 @@ LOGIN_URL = 'http://www.kartodromogranjaviana.com.br/resultados/resultados_cad.p
 RESULT_URL = 'http://www.kartodromogranjaviana.com.br/resultados/resultados_folha.php'
 RESULT_TYPE = 1 # race
 # TRIVIA:
-#	At Jan 2017, the asfalt of KGV race track was completly rebuild,
-#	thus all previous race and lap data is 'useless' for actual predictions.
-#	The folloing ID reffers to the first race at KGV after race track rebuild.
+#	At Jan 2017, the asfalt of KGV race track was completly rebuild.
+#	Thus all previous race and lap data is 'useless' for actual predictions.
+#	The folloing ID refers to the first race at KGV after race track rebuild.
 MIN_RACE_ID = 36612
 DICT_HEADER = {
 	u'POS' : 'racePosition',
@@ -140,6 +140,8 @@ class GranjaRaceSpider(scrapy.Spider):
 			for col in raceEntryData.keys():
 				raceLoader.add_value(col, raceEntryData[col])
 
+			if not raceEntryData['racePosition'].isdigit():
+				raceEntryData['racePosition'] = 99
 			raceLoader.add_value('id', int(raceEntryData['racePosition']) + 100 * int(raceId))
 
 			yield raceLoader.load_item()
