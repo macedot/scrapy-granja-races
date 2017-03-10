@@ -57,6 +57,8 @@ class GranjaRaceSpider(scrapy.Spider):
 		if lastRaceId < 0:
 			raceIdList = response.css('a').re(r'resultados_folha\.php\?tipo=1\&amp;id=(\d+)')
 			lastRaceId = int(max(raceIdList))
+			self.logger.info('Using scarapped END RACE: %i', lastRaceId)
+
 		if lastRaceId < firstRaceId:
 			lastRaceId = firstRaceId
 
