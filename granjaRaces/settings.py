@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Scrapy settings for granja project
+# Scrapy settings for granjaRaces project
 #
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
@@ -9,15 +9,24 @@
 #     http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 #     http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'granja'
+DATABASE = {
+    'drivername': 'sqlite',
+    # 'host': 'localhost',
+    # 'port': '5432',
+    # 'username': 'YOUR_USERNAME',
+    # 'password': 'YOUR_PASSWORD',
+    'database': 'granjaResult.sqlite'
+}
 
-SPIDER_MODULES = ['granja.spiders']
-NEWSPIDER_MODULE = 'granja.spiders'
+BOT_NAME = 'granjaRaces'
+
+SPIDER_MODULES = ['granjaRaces.spiders']
+NEWSPIDER_MODULE = 'granjaRaces.spiders'
 
 LOG_LEVEL = 'INFO'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'granja (+http://www.yourdomain.com)'
+#USER_AGENT = 'granjaRaces (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
@@ -48,13 +57,13 @@ ROBOTSTXT_OBEY = True
 # Enable or disable spider middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 #SPIDER_MIDDLEWARES = {
-#    'granja.middlewares.GranjaSpiderMiddleware': 543,
+#    'granjaRaces.middlewares.GranjaRacesSpiderMiddleware': 543,
 #}
 
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 #DOWNLOADER_MIDDLEWARES = {
-#    'granja.middlewares.MyCustomDownloaderMiddleware': 543,
+#    'granjaRaces.middlewares.MyCustomDownloaderMiddleware': 543,
 #}
 
 # Enable or disable extensions
@@ -65,9 +74,9 @@ ROBOTSTXT_OBEY = True
 
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'granja.pipelines.GranjaPipeline': 300,
-#}
+ITEM_PIPELINES = {
+   'granjaRaces.pipelines.GranjaRacesPipeline': 300,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html
