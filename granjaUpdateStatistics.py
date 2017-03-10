@@ -242,15 +242,21 @@ def updateStatistics():
 	logger.debug("DONE")
 
 def persistLastRaceId():
+	func_name = sys._getframe().f_code.co_name
+	logger = logging.getLogger(func_name)
+
 	con = sqlite3.connect(PATH_GRANJA_DB)
 	con.row_factory = sqlite3.Row
 	db_cur = con.cursor()
 	db_cur.execute('SELECT MAX(raceID) as lastRaceId FROM races;')
 	result = db_cur.fetchone()
 	con.close()
-	filename = 'lastRaceId'
+
+	filename = './lastRaceId'
 	with open(filename, 'wb') as file:
 		file.write("%d\n" % result['lastRaceId'])
+
+	logger.info("LAST RACE ID = %d" % result['lastRaceId'])
 	
 ################################################################################
 # MAIN
