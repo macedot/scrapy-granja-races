@@ -14,16 +14,16 @@ def intCheckDQ(str):
 	return int(str)
 
 def strTimeToFloat(str):
-	retValue = 0
 	str = str.replace(',', '.') # pt_BR time format
 	if '.' not in str:
 		return 999999
 	if ':' in str:
 		# 18:21.801
+		retValue = 0
 		valTime = str.split(':')
-		sizeTime = len(valTime)
-		for i in range(0, sizeTime - 1):
-			retValue = retValue + pow(60, i) * float(valTime[i])
+		size = len(valTime)
+		for i in range(0, size):
+			retValue = retValue + pow(60, i) * float(valTime[size - i - 1])
 	else:
 		retValue = float(str)
 	return float("{0:.3f}".format(retValue))
