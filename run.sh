@@ -42,7 +42,7 @@ if [ ! -z "${BEGIN_RACE}" ]; then
 fi
 echoInfo "================================================================================"
 echoInfo "scrapy crawl granjaRaces ${PARAM}"
-scrapy crawl granjaRaces ${PARAM} 2>&1 | tee -a ${logFilePath}
+/usr/local/bin/scrapy crawl granjaRaces ${PARAM} 2>&1 | tee -a ${logFilePath}
 
 echoInfo "================================================================================"
 echoInfo "python granjaUpdateStatistics.py"

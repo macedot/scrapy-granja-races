@@ -5,13 +5,25 @@ from scrapy.loader import ItemLoader
 from granjaRaces.items import GranjaRacesItem
 
 LOGIN_URL = 'http://www.kartodromogranjaviana.com.br/resultados/resultados_cad.php'
+
 RESULT_URL = 'http://www.kartodromogranjaviana.com.br/resultados/resultados_folha.php'
+
 RESULT_TYPE = 1 # race
-# TRIVIA:
+
+# TRIVIA 1 2017-03-xx:
 #	At Jan 2017, the asfalt of KGV race track was completly rebuild.
 #	Thus all previous race and lap data is 'useless' for actual predictions.
 #	The folloing ID refers to the first race at KGV after race track rebuild.
+#		MIN_RACE_ID = 36612
+# TRIVIA 2 2017-03-13:
+#	Seems that Granja is running different track layouts/configuration
+#	using the same 'CIRCUITO XX' identifier. Since the physical track layout 
+#	have changed a lot, some new layout possibilities will be possible,
+#	and 'CIRCUITO xx' definitions will be reset. We need to monitor their data
+#	and estabilish this a new MIN_RACE_ID when this reset occurs.
 MIN_RACE_ID = 36612
+
+# Usable columns only
 DICT_HEADER = {
 	u'POS' : 'racePosition',
 	u'NO.' : 'kartNumber',
@@ -21,12 +33,6 @@ DICT_HEADER = {
 	u'TOTAL TEMPO' : 'raceTime',
 	u'MELHOR TEMPO' : 'bestLapTime'
 }
-# DICT_SKIP = {
-	# u'COMENT\xc1RIOS' : 'comments',
-	# u'PONTOS' : 'points',
-	# u'DIFF' : 'diffToLeader',
-	# u'ESPA\xc7O' : 'diffToPrevious'
-# }
 
 class GranjaRaceSpider(scrapy.Spider):
 	name = 'granjaRaces'
@@ -90,7 +96,7 @@ class GranjaRaceSpider(scrapy.Spider):
 
 		# filter body only with 'GRANJA VIANA'
 		if 'INDOOR' not in response.body:
-			self.logger.warning('Skipping RACE (Missing INDOOR): ' + raceId)
+			self.logger.warning('Skipping RACE (Not INDOOR): ' + raceId)
 			return
 			
 		self.logger.info('Scrapping RACE: %s' % raceId)
