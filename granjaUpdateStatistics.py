@@ -28,15 +28,15 @@ def updateStatistics():
 	dbConnection = sqlite3.connect(PATH_GRANJA_DB)
 	dbCursor = dbConnection.cursor()
 
-	dbCursor.execute('''UPDATE RACES SET trackConfig = replace(trackConfig, "CIRUITO", "");''')
-	dbCursor.execute('''UPDATE RACES SET trackConfig = replace(trackConfig, "CIRCUITO", "");''')
-	dbCursor.execute('''UPDATE RACES SET trackConfig = replace(trackConfig, "CRICUITO", "");''')
+	dbCursor.execute('''UPDATE races SET trackConfig = replace(trackConfig, "CIRUITO", "");''')
+	dbCursor.execute('''UPDATE races SET trackConfig = replace(trackConfig, "CIRCUITO", "");''')
+	dbCursor.execute('''UPDATE races SET trackConfig = replace(trackConfig, "CRICUITO", "");''')
 
-	dbCursor.execute('''UPDATE RACES SET trackConfig = replace(trackConfig, "-", "");''')
-	dbCursor.execute('''UPDATE RACES SET trackConfig = "0" || trim(trackConfig);''')
+	dbCursor.execute('''UPDATE races SET trackConfig = replace(trackConfig, "-", "");''')
+	dbCursor.execute('''UPDATE races SET trackConfig = "0" || trim(trackConfig);''')
 
-	dbCursor.execute('''UPDATE RACES SET trackConfig = replace(trackConfig, "00", "0");''')
-	dbCursor.execute('''UPDATE RACES SET trackConfig = trim(trackConfig);''')
+	dbCursor.execute('''UPDATE races SET trackConfig = replace(trackConfig, "00", "0");''')
+	dbCursor.execute('''UPDATE races SET trackConfig = trim(trackConfig);''')
 
 	dbConnection.commit()
 	
@@ -63,15 +63,16 @@ def updateStatistics():
 
 	dbCursor.execute('''DROP VIEW IF EXISTS VIEW_LAST_RACES_PER_TRACK;''')
 	dbCursor.execute('''CREATE VIEW VIEW_LAST_RACES_PER_TRACK AS 
-		SELECT driverClass, trackConfig, COUNT(raceId) AS QT_RACES, MAX(raceId) as lastRaceId
+		SELECT trackConfig, COUNT(raceId) AS QT_RACES, MAX(raceId) as lastRaceId
 		FROM LAST_RACES
-		GROUP BY driverClass,trackConfig;''')
+		WHERE driverClass = 'INDOOR'
+		GROUP BY trackConfig;''')
 
 	####################
 
 	dbCursor.execute('''DROP TABLE IF EXISTS LAST_RACES_RANKING_INDOOR;''')
 	dbCursor.execute('''CREATE TABLE LAST_RACES_RANKING_INDOOR AS
-		SELECT trackConfig, driverName, raceId, MIN(bestLapTime) AS 'BEST_LAP', COUNT(*) AS RACES
+		SELECT trackConfig, driverName, raceId, MIN(bestLapTime) AS 'BEST_LAP', COUNT(*) AS QT_RACES
 		FROM races
 		WHERE
 			raceId IN (SELECT raceId FROM LAST_RACES)
@@ -82,7 +83,7 @@ def updateStatistics():
 
 	dbCursor.execute('''DROP TABLE IF EXISTS INDOOR_RANKING_LAPTIME_C_MODA;''')
 	dbCursor.execute('''CREATE TABLE INDOOR_RANKING_LAPTIME_C_MODA AS
-		SELECT kartNumber, driverName, MIN(bestLapTime) AS 'BEST_LAP', AVG(bestLapTime) AS 'AVG_LAP', COUNT(*) AS RACES
+		SELECT kartNumber, driverName, MIN(bestLapTime) AS 'BEST_LAP', AVG(bestLapTime) AS 'AVG_LAP', COUNT(*) AS QT_RACES
 		FROM races
 		WHERE 
 			raceId IN (SELECT raceId FROM LAST_RACES)
@@ -101,13 +102,13 @@ def updateStatistics():
 
 	dbCursor.execute('''DROP TABLE IF EXISTS ALLTIME_RANKING_LAPTIME;''')
 	dbCursor.execute('''CREATE TABLE ALLTIME_RANKING_LAPTIME AS
-		SELECT driverClass, trackConfig, driverName, raceId, MIN(bestLapTime) AS 'BEST_LAP', COUNT(*) AS RACES
+		SELECT driverClass, trackConfig, driverName, raceId, MIN(bestLapTime) AS 'BEST_LAP', COUNT(*) AS QT_RACES
 		FROM races
 		GROUP BY driverClass,trackConfig;''')
 
 	dbCursor.execute('''DROP TABLE IF EXISTS ALLTIME_RANKING_LAPTIME_INDOOR;''')
 	dbCursor.execute('''CREATE TABLE ALLTIME_RANKING_LAPTIME_INDOOR AS
-		SELECT trackConfig, driverName, raceId, MIN(bestLapTime) AS 'BEST_LAP', COUNT(*) AS RACES
+		SELECT trackConfig, driverName, raceId, MIN(bestLapTime) AS 'BEST_LAP', COUNT(*) AS QT_RACES
 		FROM races
 		WHERE driverClass = 'INDOOR'
 		GROUP BY trackConfig;''')

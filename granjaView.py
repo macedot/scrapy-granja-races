@@ -66,17 +66,22 @@ class granjaView(object):
 		</style>
 		</head><body>
 		<table style="position: absolute; top: 0; bottom: 0; left: 0; right: 0;">
-			<tr style="height:60%;">
+			<tr style="height:30%;">
+				<td style="width:300px"><iframe src="/VIEW_LAST_RACES_PER_TRACK" frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;"></iframe></td>
 				<td><iframe src="/LAST_RACES_RANKING_INDOOR" frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;"></iframe></td>
 				<td><iframe src="/ALLTIME_RANKING_LAPTIME_INDOOR" frameborder="0"></iframe></td>
 			</tr>
-			<tr style="height:40%;">
-				<td colSpan=2><iframe src="/CKC_BI_INDOOR" frameborder="0"></iframe></td>
+			<tr style="height:70%;">
+				<td colSpan=3><iframe src="/CKC_BI_INDOOR" frameborder="0"></iframe></td>
 			</tr>
 		</table>
 		</body></html>
 		"""
 		return htmlcode
+
+	@cherrypy.expose
+	def VIEW_LAST_RACES_PER_TRACK(self):
+		return tableData2Html('VIEW_LAST_RACES_PER_TRACK')
 
 	@cherrypy.expose
 	def LAST_RACES_RANKING_INDOOR(self):
@@ -96,7 +101,7 @@ if __name__ == '__main__':
 	cherrypy.config.update({'server.socket_host': '0.0.0.0'})
 	conf = {
 		'/': {
-			#'tools.sessions.on': True,
+			# # 'tools.sessions.on': True,
 			'tools.staticdir.root': os.path.abspath(os.getcwd()),
 			'tools.caching.on' : True,
 			'tools.caching.delay' : 3600,
@@ -110,11 +115,3 @@ if __name__ == '__main__':
 	}
 	cherrypy.quickstart(granjaView(), '/', conf)
 
-#TODO:
-#/index/ -> iframe com rankings (SEM BI)
-#/ckc/indoor/podium
-#/ckc/indoor/laptime
-#/ckc/indoor/bi
-#/ckc/parolim/podium
-#/ckc/parolim/laptime
-#/ckc/parolim/bi
