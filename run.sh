@@ -4,8 +4,7 @@ export PATH=".:$HOME:$PATH"
 
 declare baseName=$(basename $0)
 declare currentTime=$(date +%Y%m%d_%H%M%S)
-#declare WORK_PATH="${HOME}/scrapyGranja"
-declare WORK_PATH="."
+declare WORK_PATH="${HOME}/scrapyGranja"
 declare logFilePath="${WORK_PATH}/log/${baseName}-${currentTime}.log"
 declare PYTHON="python3"
 
@@ -33,6 +32,7 @@ if [ ! -d "${WORK_PATH}" ]; then
 	exit 1
 fi
 
+cd ${WORK_PATH}
 touch ${logFilePath}
 echoInfo "LOG: ${logFilePath}"
 
