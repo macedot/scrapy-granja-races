@@ -83,7 +83,7 @@ def updateStatistics():
 
 	dbCursor.execute('''DROP TABLE IF EXISTS RENTAL_RANKING_LAPTIME_C_MODA;''')
 	dbCursor.execute('''CREATE TABLE RENTAL_RANKING_LAPTIME_C_MODA AS
-		SELECT kartNumber, driverName, MIN(bestLapTime) AS 'BEST_LAP', AVG(bestLapTime) AS 'AVG_LAP', COUNT(*) AS QT_LAPS
+		SELECT kartNumber, driverName, MIN(bestLapTime) AS 'BEST_LAP', AVG(bestLapTime) AS 'AVG_LAP'
 		FROM races
 		WHERE 
 			raceId IN (SELECT raceId FROM LAST_RACES)
