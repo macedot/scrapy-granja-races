@@ -1,5 +1,7 @@
 #!/bin/bash
 
+declare PYTHON="python3"
+
 runningPid=0
 function finish {
 	isRunning=$(kill -0 ${runningPid} 2>&1)
@@ -29,7 +31,7 @@ if [ ! -f "${granjaView_py}" ]; then
 fi
 
 while(true); do
-	python ${granjaView_py}
+	$PYTHON ${granjaView_py}
 	sleep 3
 done
 
