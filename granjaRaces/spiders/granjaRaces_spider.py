@@ -4,12 +4,7 @@ import os
 from scrapy.loader import ItemLoader
 from granjaRaces.items import GranjaRacesItem
 
-LOGIN_URL = 'http://www.kartodromogranjaviana.com.br/resultados/resultados_cad.php'
-
-RESULT_URL = 'http://www.kartodromogranjaviana.com.br/resultados/resultados_folha.php'
-
-RESULT_TYPE = 1 # race
-
+"""
 # TRIVIA 1 2017-03-xx:
 #	At Jan 2017, the asfalt of KGV race track was completly rebuild.
 #	Thus all previous race and lap data is 'useless' for actual predictions.
@@ -21,14 +16,34 @@ RESULT_TYPE = 1 # race
 #	have changed a lot, some new layout possibilities will be possible,
 #	and 'CIRCUITO xx' definitions will be reset. We need to monitor their data
 #	and estabilish this a new MIN_RACE_ID when this reset occurs.
-MIN_RACE_ID = 36612
+
+Result list URL:
+	http://www.kgv.net.br/resultados/Default.aspx
+
+Example of url at resulting page:
+	http://www.kgv.net.br/resultados/Results.aspx?UserId=&way=../Arquivos/KGV-G-20190117001238969-Rental-Resultado.html&year=2019&month=Janeiro&day=Todos
+
+Example DIRECT ACCESS result page:
+	http://www.kgv.net.br/Arquivos/KGV-G-20190117001238969-Rental-Resultado.html
+	-> Granja viana + Standard rental kart
+	
+	http://www.kgv.net.br/Arquivos/KGV-G-20190116232555125-Interlagos-Resultado.html
+	-> Interlagos + Standard rental kart
+
+First Race in 2019
+	http://www.kgv.net.br/Arquivos/KGV-G-20190103174040999-Rental-Resultado.html
+
+"""
+
+# first race of 2019
+MIN_RACE_ID = 20190103174040999
 
 # Usable columns only
 DICT_HEADER = {
 	u'POS' : 'racePosition',
 	u'NO.' : 'kartNumber',
 	u'NOME' : 'driverName',
-	u'CLASSE' : 'driverClass',
+	u'CLASSE' : 'driverClass',		# RENTAL
 	u'VOLTAS' : 'numOfLaps',
 	u'TOTAL TEMPO' : 'raceTime',
 	u'MELHOR TEMPO' : 'bestLapTime'
@@ -36,67 +51,73 @@ DICT_HEADER = {
 
 class GranjaRaceSpider(scrapy.Spider):
 	name = 'granjaRaces'
-	start_urls = ['http://www.kartodromogranjaviana.com.br/resultados/resultados_cad.php']
 
 	def start_requests(self):
-		return [scrapy.FormRequest(
-			LOGIN_URL,
-			formdata = {
-				'email': 'granja@macedo.me',
-				'opt': 'L'
-			},
-			callback = self.after_login
-		)]
+		return [scrapy.Request('http://www.kgv.net.br/resultados/Default.aspx', callback = self.result_list)]
 
-	def after_login(self, response):
-		# check login succeed before going on
-		if 'Informe o e-mail cadastrado' in response.body:
-			self.logger.error('Login failed')
-			return
-
+	def result_list(self, response):
 		# $> scrapy crawl granjaRaces -a begin=36620 -a end=36642
+		
 		firstRaceId = int(getattr(self, 'begin', MIN_RACE_ID))
 		if firstRaceId < MIN_RACE_ID:
 			firstRaceId = MIN_RACE_ID
 
+		"""
+		http://www.kgv.net.br/resultados/Results.aspx?UserId=&way=../Arquivos/KGV-G-20190117001238969-Rental-Resultado.html&year=2019&month=Janeiro&day=Todos
+
+		http://www.kgv.net.br/resultados/Results.aspx
+			?UserId=
+			&way=../Arquivos/KGV-G-20190117001238969-Rental-Resultado.html
+			&year=2019
+			&month=Janeiro
+			&day=Todos
+		""" 
+
+		# get the list of available race results for current result page (default: current month)
+		raceIdList_raw = response.css('a').re(r'Results\.aspx\?.+\&amp;way=\.\.\/Arquivos\/KGV-G-(.+)-Rental-Resultado\.html')
+		self.logger.debug('RAW raceIdList -> ' + ','.join(raceIdList_raw))
+
 		lastRaceId = int(getattr(self, 'end', -1))
 		if lastRaceId < 0:
-			raceIdList = response.css('a').re(r'resultados_folha\.php\?tipo=1\&amp;id=(\d+)')
-			lastRaceId = int(max(raceIdList))
-			self.logger.info('Using scarapped END RACE: %i', lastRaceId)
+			lastRaceId = int(max(raceIdList_raw))
 
 		if lastRaceId < firstRaceId:
 			lastRaceId = firstRaceId
 
 		self.logger.info('Scrapping races from %i to %i', firstRaceId, lastRaceId)
 
-		# continue scraping with authenticated session...
-		for raceId in range(firstRaceId, 1 + lastRaceId, 1):
-			url = '%s?tipo=%i&id=%i' % (RESULT_URL, RESULT_TYPE, raceId)
+		# yelds scrap requests
+		raceIdList = list(map(int, raceIdList_raw))
+		raceIdList = [i for i in raceIdList if i >= firstRaceId and i <= lastRaceId]
+		for raceId in raceIdList:
+			# url = '%s?tipo=%i&id=%i' % (RESULT_URL, RESULT_TYPE, raceId)
+			url = 'http://www.kgv.net.br/Arquivos/KGV-G-%d-Rental-Resultado.html' % (raceId)
 			self.logger.debug('yielding a start url: %s' % url)
 			yield scrapy.Request(url, callback=self.parse)
 
 	def parse(self, response):
-		# http://www.kartodromogranjaviana.com.br/resultados/resultados_folha.php?tipo=1&id=36612
+		# http://www.kgv.net.br/Arquivos/KGV-G-20190103174040999-Rental-Resultado.html
 		self.logger.debug('response.url = [' + response.url + ']')
-		raceId = response.url.split('=')[-1]
-		if not raceId:
+
+		try:
+			raceId = re.search(r'Arquivos\/KGV-G-(.+)-Rental-Resultado\.html', response.url).group(1)
+		except AttributeError:
 			self.logger.error('Invalid URL: ' + response.url)
 			return
 
 		# filter body only with 'GRANJA VIANA'
-		if 'GRANJA VIANA' not in response.body:
+		if 'GRANJA VIANA' not in response.text:
 			self.logger.warning('Skipping RACE (Not GRANJA VIANA): ' + raceId)
 			return
 
 		# discart INTERLAGOS races (for now...)
-		if 'INTERLAGOS' in response.body:
+		if 'INTERLAGOS' in response.text:
 			self.logger.warning('Skipping RACE (INTERLAGOS): ' + raceId)
 			return
 
 		# filter body only with 'GRANJA VIANA'
-		if 'INDOOR' not in response.body:
-			self.logger.warning('Skipping RACE (Not INDOOR): ' + raceId)
+		if 'RENTAL' not in response.text:
+			self.logger.warning('Skipping RACE (Not RENTAL): ' + raceId)
 			return
 			
 		self.logger.info('Scrapping RACE: %s' % raceId)

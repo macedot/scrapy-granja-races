@@ -43,7 +43,7 @@ def tableData2Html(tableName):
 		htmlcodemin = htmlcodemin.replace('</th></tr>', '</th></tr></thead>')
 		htmlcodemin = htmlcodemin.replace('<th>', '<th class="sort-header">')
 		htmlcodemin = re.sub(r'\bNone\b', '0', htmlcodemin)
-	except sqlite3.Error, e:
+	except (sqlite3.Error, x) as e:
 		if con:
 			con.rollback()
 		logging.error("Error %s:" % e.args[0])
@@ -67,12 +67,12 @@ class granjaView(object):
 		</head><body>
 		<table style="position: absolute; top: 0; bottom: 0; left: 0; right: 0;">
 			<tr style="height:30%;">
-				<td style="width:300px"><iframe src="/VIEW_LAST_RACES_PER_TRACK" frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;"></iframe></td>
-				<td><iframe src="/LAST_RACES_RANKING_INDOOR" frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;"></iframe></td>
-				<td><iframe src="/ALLTIME_RANKING_LAPTIME_INDOOR" frameborder="0"></iframe></td>
+				<td style="width:400px"><iframe src="/VIEW_LAST_RACES_PER_TRACK" frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;"></iframe></td>
+				<td><iframe src="/LAST_RACES_RANKING_RENTAL" frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;"></iframe></td>
+				<td><iframe src="/ALLTIME_RANKING_LAPTIME_RENTAL" frameborder="0"></iframe></td>
 			</tr>
 			<tr style="height:70%;">
-				<td colSpan=3><iframe src="/CKC_BI_INDOOR" frameborder="0"></iframe></td>
+				<td colSpan=3><iframe src="/CKC_BI_RENTAL" frameborder="0"></iframe></td>
 			</tr>
 		</table>
 		</body></html>
@@ -84,16 +84,16 @@ class granjaView(object):
 		return tableData2Html('VIEW_LAST_RACES_PER_TRACK')
 
 	@cherrypy.expose
-	def LAST_RACES_RANKING_INDOOR(self):
-		return tableData2Html('LAST_RACES_RANKING_INDOOR')
+	def LAST_RACES_RANKING_RENTAL(self):
+		return tableData2Html('LAST_RACES_RANKING_RENTAL')
 
 	@cherrypy.expose
-	def ALLTIME_RANKING_LAPTIME_INDOOR(self):
-		return tableData2Html('ALLTIME_RANKING_LAPTIME_INDOOR')
+	def ALLTIME_RANKING_LAPTIME_RENTAL(self):
+		return tableData2Html('ALLTIME_RANKING_LAPTIME_RENTAL')
 
 	@cherrypy.expose
-	def CKC_BI_INDOOR(self):
-		return tableData2Html('CKC_BI_INDOOR')
+	def CKC_BI_RENTAL(self):
+		return tableData2Html('CKC_BI_RENTAL')
 
 ################################################################################
 ################################################################################

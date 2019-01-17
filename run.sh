@@ -4,8 +4,10 @@ export PATH=".:$HOME:$PATH"
 
 declare baseName=$(basename $0)
 declare currentTime=$(date +%Y%m%d_%H%M%S)
-declare WORK_PATH="${HOME}/scrapyGranja"
+#declare WORK_PATH="${HOME}/scrapyGranja"
+declare WORK_PATH="."
 declare logFilePath="${WORK_PATH}/log/${baseName}-${currentTime}.log"
+declare PYTHON="python3"
 
 function echoInfo {
 	local msg=$1
@@ -34,7 +36,6 @@ fi
 touch ${logFilePath}
 echoInfo "LOG: ${logFilePath}"
 
-cd $WORK_PATH
 BEGIN_RACE=$(cat ${WORK_PATH}/lastRaceId)
 PARAM=""
 if [ ! -z "${BEGIN_RACE}" ]; then
@@ -45,10 +46,8 @@ echoInfo "scrapy crawl granjaRaces ${PARAM}"
 /usr/local/bin/scrapy crawl granjaRaces ${PARAM} 2>&1 | tee -a ${logFilePath}
 
 echoInfo "================================================================================"
-echoInfo "python granjaUpdateStatistics.py"
-python $WORK_PATH/granjaUpdateStatistics.py 2>&1 | tee -a ${logFilePath}
-
-cd - &>/dev/null
+echoInfo "$PYTHON granjaUpdateStatistics.py"
+$PYTHON $WORK_PATH/granjaUpdateStatistics.py 2>&1 | tee -a ${logFilePath}
 
 # Job is done!
 echoInfo "================================================================================"

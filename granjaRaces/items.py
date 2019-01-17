@@ -9,7 +9,7 @@ import scrapy
 from scrapy.loader.processors import MapCompose, TakeFirst
 
 def intCheckDQ(str):
-	if 'DQ' in str:
+	if 'Não completou' in str or 'DQ' in str:
 		return 99
 	return int(str)
 
@@ -55,7 +55,7 @@ class GranjaRacesItem(scrapy.Item):
         output_processor=TakeFirst(),
     )
 	driverName = scrapy.Field(
-        input_processor=MapCompose(unicode.strip),
+        input_processor=MapCompose(str.strip),
         output_processor=TakeFirst(),
     )
 	driverClass = scrapy.Field(
