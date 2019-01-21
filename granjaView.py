@@ -99,6 +99,7 @@ class granjaView(object):
 ################################################################################
 if __name__ == '__main__':
 	cherrypy.config.update({'server.socket_host': '0.0.0.0'})
+	cherrypy.config.update({'server.socket_port': 80})
 	conf = {
 		'/': {
 			# # 'tools.sessions.on': True,
