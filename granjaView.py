@@ -198,7 +198,7 @@ class granjaView(object):
 		rows = int(math.ceil(numOfKarts/cols))
 		for i, kartNumber in enumerate((kartList)):
 			ax = fig.add_subplot(rows,cols,i+1)
-			ax.text(0.05, 0.95, kartNumber, transform=ax.transAxes, fontsize=16, fontweight='bold', va='top')
+			ax.text(0.75, 0.95, kartNumber, transform=ax.transAxes, fontsize=16, fontweight='bold', va='top')
 			bestLapList = getKartBestLaps(kartNumber,trackConfig)
 			totalRaces = len(bestLapList)
 			n, bins, patches = ax.hist(x=bestLapList, bins='auto', color='#0504aa', alpha=0.7, rwidth=0.85)
