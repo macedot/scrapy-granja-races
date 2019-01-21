@@ -78,7 +78,13 @@ def updateStatistics():
 
 	dbCursor.execute('''DROP TABLE IF EXISTS LAST_RACES_RANKING_RENTAL;''')
 	dbCursor.execute('''CREATE TABLE LAST_RACES_RANKING_RENTAL AS
-		SELECT trackConfig, driverName, raceId, raceIdKGV, MIN(bestLapTime) AS 'BEST_LAP', SUM(numOfLaps) AS QT_LAPS
+		SELECT
+			trackConfig
+			,raceIdKGV
+			,driverName
+			,MIN(bestLapTime) AS 'BEST_LAP'
+			,SUM(numOfLaps) AS QT_LAPS
+			,COUNT(raceId) AS QT_RACES
 		FROM races
 		WHERE
 			raceId IN (SELECT raceId FROM LAST_RACES)
@@ -108,13 +114,26 @@ def updateStatistics():
 
 	dbCursor.execute('''DROP TABLE IF EXISTS ALLTIME_RANKING_LAPTIME;''')
 	dbCursor.execute('''CREATE TABLE ALLTIME_RANKING_LAPTIME AS
-		SELECT driverClass, trackConfig, driverName, raceId, raceIdKGV, MIN(bestLapTime) AS 'BEST_LAP', SUM(numOfLaps) AS QT_LAPS
+		SELECT
+			driverClass
+			,trackConfig
+			,driverName
+			,raceIdKGV
+			,MIN(bestLapTime) AS 'BEST_LAP'
+			,SUM(numOfLaps) AS QT_LAPS
+			,COUNT(raceId) AS QT_RACES
 		FROM races
 		GROUP BY driverClass,trackConfig;''')
 
 	dbCursor.execute('''DROP TABLE IF EXISTS ALLTIME_RANKING_LAPTIME_RENTAL;''')
 	dbCursor.execute('''CREATE TABLE ALLTIME_RANKING_LAPTIME_RENTAL AS
-		SELECT trackConfig, driverName, raceId, raceIdKGV, MIN(bestLapTime) AS 'BEST_LAP', SUM(numOfLaps) AS QT_LAPS
+		SELECT 
+			trackConfig
+			,driverName
+			,raceIdKGV
+			,MIN(bestLapTime) AS 'BEST_LAP'
+			,SUM(numOfLaps) AS QT_LAPS
+			,COUNT(raceId) AS QT_RACES
 		FROM races
 		WHERE driverClass = 'RENTAL'
 		GROUP BY trackConfig;''')

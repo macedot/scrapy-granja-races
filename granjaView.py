@@ -55,6 +55,8 @@ def tableData2Html(tableName):
 class granjaView(object):
 	@cherrypy.expose
 	def index(self):
+		# <td style="width:400px"><iframe src="/VIEW_LAST_RACES_PER_TRACK" frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;"></iframe></td>
+		# <td><iframe src="/LAST_RACES_RANKING_RENTAL" frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;"></iframe></td>
 		htmlcode = """
 		<html><head><title>CKC_BI</title>
 		<!-- link href="/static/style.css" rel="stylesheet" -->
@@ -66,13 +68,12 @@ class granjaView(object):
 		</style>
 		</head><body>
 		<table style="position: absolute; top: 0; bottom: 0; left: 0; right: 0;">
-			<tr style="height:30%;">
-				<td style="width:400px"><iframe src="/VIEW_LAST_RACES_PER_TRACK" frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;"></iframe></td>
-				<td><iframe src="/LAST_RACES_RANKING_RENTAL" frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;"></iframe></td>
+			<tr style="height:35%;">
+				<td style="width:50%"><iframe src="/LAST_RACES_RANKING_RENTAL" frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;"></iframe></td>
 				<td><iframe src="/ALLTIME_RANKING_LAPTIME_RENTAL" frameborder="0"></iframe></td>
 			</tr>
-			<tr style="height:70%;">
-				<td colSpan=3><iframe src="/CKC_BI_RENTAL" frameborder="0"></iframe></td>
+			<tr style="height:65%;">
+				<td colSpan=2><iframe src="/CKC_BI_RENTAL" frameborder="0"></iframe></td>
 			</tr>
 		</table>
 		</body></html>
