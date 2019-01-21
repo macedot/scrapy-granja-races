@@ -5,7 +5,6 @@ export PATH=".:$HOME:$PATH"
 declare baseName=$(basename $0)
 declare currentTime=$(date +%Y%m%d_%H%M%S)
 declare WORK_PATH="${HOME}/scrapyGranja"
-#declare WORK_PATH="."
 declare logFilePath="${WORK_PATH}/log/${baseName}-${currentTime}.log"
 declare PYTHON="python3"
 
@@ -34,11 +33,10 @@ if [ ! -d "${WORK_PATH}" ]; then
 fi
 
 cd ${WORK_PATH}
-
 touch ${logFilePath}
 echoInfo "LOG: ${logFilePath}"
 
-BEGIN_RACE=$(cat ${WORK_PATH}/lastRaceId)
+BEGIN_RACE=$(cat ${WORK_PATH}/lastRaceId 2>/dev/null)
 PARAM=""
 if [ ! -z "${BEGIN_RACE}" ]; then
 	PARAM="-a begin=$BEGIN_RACE"

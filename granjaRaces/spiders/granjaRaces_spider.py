@@ -58,10 +58,6 @@ class GranjaRaceSpider(scrapy.Spider):
 	def result_list(self, response):
 		# $> scrapy crawl granjaRaces -a begin=36620 -a end=36642
 		
-		firstRaceId = int(getattr(self, 'begin', MIN_RACE_ID))
-		if firstRaceId < MIN_RACE_ID:
-			firstRaceId = MIN_RACE_ID
-
 		"""
 		http://www.kgv.net.br/resultados/Results.aspx?UserId=&way=../Arquivos/KGV-G-20190117001238969-Rental-Resultado.html&year=2019&month=Janeiro&day=Todos
 
@@ -72,11 +68,15 @@ class GranjaRaceSpider(scrapy.Spider):
 			&month=Janeiro
 			&day=Todos
 		""" 
-
+		
 		# get the list of available race results for current result page (default: current month)
 		raceIdList_raw = response.css('a').re(r'Results\.aspx\?.+\&amp;way=\.\.\/Arquivos\/KGV-G-(.+)-Rental-Resultado\.html')
 		self.logger.debug('RAW raceIdList -> ' + ','.join(raceIdList_raw))
 
+		firstRaceId = int(getattr(self, 'begin', -1))
+		if firstRaceId < MIN_RACE_ID:
+			firstRaceId = MIN_RACE_ID
+		
 		lastRaceId = int(getattr(self, 'end', -1))
 		if lastRaceId < 0:
 			lastRaceId = int(max(raceIdList_raw))
