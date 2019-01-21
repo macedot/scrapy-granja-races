@@ -92,5 +92,7 @@ ENV/
 
 # Rope project settings
 .ropeproject
-
 lastRaceId
+backup/
+log/
+

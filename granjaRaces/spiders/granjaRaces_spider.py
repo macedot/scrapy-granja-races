@@ -106,9 +106,9 @@ class GranjaRaceSpider(scrapy.Spider):
 
 		self.logger.info('Number of races to scrap: %i', len(raceIdList))
 
-		for raceId in raceIdList:
-			# url = '%s?tipo=%i&id=%i' % (RESULT_URL, RESULT_TYPE, raceId)
-			url = 'http://www.kgv.net.br/Arquivos/KGV-G-%d-Rental-Resultado.html' % (raceId)
+		for raceIdKGV in raceIdList:
+			# url = '%s?tipo=%i&id=%i' % (RESULT_URL, RESULT_TYPE, raceIdKGV)
+			url = 'http://www.kgv.net.br/Arquivos/KGV-G-%d-Rental-Resultado.html' % (raceIdKGV)
 			self.logger.debug('yielding a start url: %s' % url)
 			yield scrapy.Request(url, callback=self.parse)
 
@@ -117,34 +117,34 @@ class GranjaRaceSpider(scrapy.Spider):
 		self.logger.debug('response.url = [' + response.url + ']')
 
 		try:
-			raceId = re.search(r'Arquivos\/KGV-G-(.+)-Rental-Resultado\.html', response.url).group(1)
+			raceIdKGV = re.search(r'Arquivos\/KGV-G-(.+)-Rental-Resultado\.html', response.url).group(1)
 		except AttributeError:
 			self.logger.error('Invalid URL: ' + response.url)
 			return
 
 		# filter body only with 'GRANJA VIANA'
 		if 'GRANJA VIANA' not in response.text:
-			self.logger.warning('Skipping RACE (Not GRANJA VIANA): ' + raceId)
+			self.logger.warning('Skipping RACE (Not GRANJA VIANA): ' + raceIdKGV)
 			return
 
 		# discart INTERLAGOS races (for now...)
 		if 'INTERLAGOS' in response.text:
-			self.logger.warning('Skipping RACE (INTERLAGOS): ' + raceId)
+			self.logger.warning('Skipping RACE (INTERLAGOS): ' + raceIdKGV)
 			return
 
 		# filter body only with 'GRANJA VIANA'
 		if 'RENTAL' not in response.text:
-			self.logger.warning('Skipping RACE (Not RENTAL): ' + raceId)
+			self.logger.warning('Skipping RACE (Not RENTAL): ' + raceIdKGV)
 			return
 			
-		self.logger.info('Scrapping RACE: %s' % raceId)
-		self.persistToFile(raceId, response)
+		self.logger.info('Scrapping RACE: %s' % raceIdKGV)
+		self.persistToFile(raceIdKGV, response)
 
 		# get track configuration
 		# KARTODROMO INTERNACIONAL GRANJA VIANA KGV RACE TRACKS - CIRCUITO 01
 		headerbig = response.css('div.headerbig::text').extract_first()
 		if headerbig is None:
-			self.logger.error('Missing headerbig (%s)' % raceId)
+			self.logger.error('Missing headerbig (%s)' % raceIdKGV)
 			return
 		
 		if '-' not in headerbig:
@@ -159,13 +159,13 @@ class GranjaRaceSpider(scrapy.Spider):
 		# get table header
 		listHeader = [h.strip().upper() for h in response.css('th.column::text').extract()]
 		if not listHeader:
-			self.logger.error('No table header for RACE %s' % raceId)
+			self.logger.error('No table header for RACE %s' % raceIdKGV)
 			return
 
 		# check header
 		for h in DICT_HEADER.keys():
 			if h not in listHeader:
-				self.logger.error('MISSING HEADER COLUMN (%s): %s' % (raceId, h))
+				self.logger.error('MISSING HEADER COLUMN (%s): %s' % (raceIdKGV, h))
 				return
 
 		# get table data
@@ -181,19 +181,20 @@ class GranjaRaceSpider(scrapy.Spider):
 				i += 1
 		
 			raceLoader = ItemLoader(item=GranjaRacesItem(), response=response)
-			raceLoader.add_value('raceId', raceId)
+			raceLoader.add_value('raceId', trimId(raceIdKGV))
+			raceLoader.add_value('raceIdKGV', raceIdKGV)
 			raceLoader.add_value('trackConfig', trackConfig)
 			for col in raceEntryData.keys():
 				raceLoader.add_value(col, raceEntryData[col])
 
 			if not raceEntryData['racePosition'].isdigit():
 				raceEntryData['racePosition'] = 99
-			raceLoader.add_value('id', int(raceEntryData['racePosition']) + 100 * int(raceId))
+			raceLoader.add_value('id', int(raceEntryData['racePosition']) + 100 * int(raceIdKGV))
 
 			yield raceLoader.load_item()
 
-	def persistToFile(self, raceId, response):
-		filename = 'raceResults/%s.html' % raceId
+	def persistToFile(self, raceIdKGV, response):
+		filename = 'raceResults/%s.html' % raceIdKGV
 		with open(filename, 'wb') as file:
 			file.write(response.body)
-		self.log('RACE %s saved file %s' % (raceId, filename))
+		self.log('RACE %s saved file %s' % (raceIdKGV, filename))

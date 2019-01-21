@@ -44,7 +44,7 @@ def updateStatistics():
 
 	dbCursor.execute('''DROP TABLE IF EXISTS LAST_RACES;''')
 	dbCursor.execute('''CREATE TABLE LAST_RACES AS
-		SELECT raceId,driverClass,trackConfig,COUNT(kartNumber) AS gridSize
+		SELECT raceId,raceIdKGV,driverClass,trackConfig,COUNT(kartNumber) AS gridSize
 		FROM races
 		WHERE 
 			driverClass = 'RENTAL'
@@ -57,13 +57,19 @@ def updateStatistics():
 
 	dbCursor.execute('''DROP VIEW IF EXISTS VIEW_LAST_RACES;''')
 	dbCursor.execute('''CREATE VIEW VIEW_LAST_RACES AS 
-		SELECT driverClass,COUNT(raceId) AS QT_RACES,MAX(raceId) as lastRaceId
+		SELECT driverClass
+			,COUNT(raceId) AS QT_RACES
+			,raceIdKGV
+			,MAX(raceId) as lastRaceId
 		FROM LAST_RACES
 		GROUP BY driverClass;''')
 
 	dbCursor.execute('''DROP VIEW IF EXISTS VIEW_LAST_RACES_PER_TRACK;''')
 	dbCursor.execute('''CREATE VIEW VIEW_LAST_RACES_PER_TRACK AS 
-		SELECT trackConfig, COUNT(raceId) AS QT_RACES, MAX(raceId) as lastRaceId
+		SELECT trackConfig
+			,COUNT(raceId) AS QT_RACES
+			,raceIdKGV
+			,MAX(raceId) as lastRaceId
 		FROM LAST_RACES
 		WHERE driverClass = 'RENTAL'
 		GROUP BY trackConfig;''')
@@ -72,7 +78,7 @@ def updateStatistics():
 
 	dbCursor.execute('''DROP TABLE IF EXISTS LAST_RACES_RANKING_RENTAL;''')
 	dbCursor.execute('''CREATE TABLE LAST_RACES_RANKING_RENTAL AS
-		SELECT trackConfig, driverName, raceId, MIN(bestLapTime) AS 'BEST_LAP', SUM(numOfLaps) AS QT_LAPS
+		SELECT trackConfig, driverName, raceId, raceIdKGV, MIN(bestLapTime) AS 'BEST_LAP', SUM(numOfLaps) AS QT_LAPS
 		FROM races
 		WHERE
 			raceId IN (SELECT raceId FROM LAST_RACES)
@@ -102,13 +108,13 @@ def updateStatistics():
 
 	dbCursor.execute('''DROP TABLE IF EXISTS ALLTIME_RANKING_LAPTIME;''')
 	dbCursor.execute('''CREATE TABLE ALLTIME_RANKING_LAPTIME AS
-		SELECT driverClass, trackConfig, driverName, raceId, MIN(bestLapTime) AS 'BEST_LAP', SUM(numOfLaps) AS QT_LAPS
+		SELECT driverClass, trackConfig, driverName, raceId, raceIdKGV, MIN(bestLapTime) AS 'BEST_LAP', SUM(numOfLaps) AS QT_LAPS
 		FROM races
 		GROUP BY driverClass,trackConfig;''')
 
 	dbCursor.execute('''DROP TABLE IF EXISTS ALLTIME_RANKING_LAPTIME_RENTAL;''')
 	dbCursor.execute('''CREATE TABLE ALLTIME_RANKING_LAPTIME_RENTAL AS
-		SELECT trackConfig, driverName, raceId, MIN(bestLapTime) AS 'BEST_LAP', SUM(numOfLaps) AS QT_LAPS
+		SELECT trackConfig, driverName, raceId, raceIdKGV, MIN(bestLapTime) AS 'BEST_LAP', SUM(numOfLaps) AS QT_LAPS
 		FROM races
 		WHERE driverClass = 'RENTAL'
 		GROUP BY trackConfig;''')
@@ -194,16 +200,15 @@ def persistLastRaceId():
 	con = sqlite3.connect(PATH_GRANJA_DB)
 	con.row_factory = sqlite3.Row
 	db_cur = con.cursor()
-	#db_cur.execute('SELECT MAX(raceID) as lastRaceId FROM races;')
-	db_cur.execute('SELECT raceID,substr(raceID,1,16) as T FROM races ORDER BY T DESC LIMIT 1;')
+	db_cur.execute('SELECT MAX(raceId) as lastRaceId FROM races;')
 	result = db_cur.fetchone()
 	con.close()
 
 	filename = './lastRaceId'
 	with open(filename, 'wb') as file:
-		file.write(str.encode("{}\n".format(result['raceID'])))
+		file.write(str.encode("{}\n".format(result['lastRaceId'])))
 
-	logger.info("LAST RACE ID = %d" % result['raceID'])
+	logger.info("LAST RACE ID = %d" % result['lastRaceId'])
 	
 ################################################################################
 # MAIN

@@ -30,6 +30,7 @@ class GranjaRaces(DeclarativeBase):
 
 	id = Column('id', Integer, primary_key=True)
 	raceId = Column('raceId', Integer)
+	raceIdKGV = Column('raceIdKGV', Integer)
 	trackConfig = Column('trackConfig', String)
 	racePosition = Column('racePosition', Integer)
 	kartNumber = Column('kartNumber', Integer)

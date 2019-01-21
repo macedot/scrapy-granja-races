@@ -42,6 +42,10 @@ class GranjaRacesItem(scrapy.Item):
         input_processor=MapCompose(int),
         output_processor=TakeFirst(),
     )
+	raceIdKGV = scrapy.Field(
+        input_processor=MapCompose(int),
+        output_processor=TakeFirst(),
+    )
 	trackConfig = scrapy.Field(
         input_processor=MapCompose(str),
         output_processor=TakeFirst(),
