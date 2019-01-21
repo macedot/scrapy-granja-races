@@ -37,9 +37,9 @@ touch ${logFilePath}
 echoInfo "LOG: ${logFilePath}"
 
 BEGIN_RACE=$(cat ${WORK_PATH}/lastRaceId 2>/dev/null)
-PARAM=""
+PARAM="$*"
 if [ ! -z "${BEGIN_RACE}" ]; then
-	PARAM="-a begin=$BEGIN_RACE"
+	PARAM="-a begin=$BEGIN_RACE ${PARAM}"
 fi
 echoInfo "================================================================================"
 echoInfo "scrapy crawl granjaRaces ${PARAM}"

@@ -85,21 +85,24 @@ class GranjaRaceSpider(scrapy.Spider):
 		if firstRaceId < MIN_RACE_ID:
 			firstRaceId = MIN_RACE_ID
 		
-		lastRaceId = int(getattr(self, 'end', -1)) # use AS IS (dont trim here!)
-		self.logger.info('PARAM lastRaceId = {}'.format(lastRaceId))
-		if lastRaceId < 0:
-			lastRaceId = int(max(raceIdList_raw))
-			self.logger.info('MAX lastRaceId from raceIdList_raw = {}'.format(lastRaceId))
+		# lastRaceId = int(getattr(self, 'end', -1)) # use AS IS (dont trim here!)
+		# self.logger.info('PARAM lastRaceId = {}'.format(lastRaceId))
+		# if lastRaceId < 0:
+			# lastRaceId = int(max(raceIdList_raw))
+			# self.logger.info('MAX lastRaceId from raceIdList_raw = {}'.format(lastRaceId))
 
-		if trimId(lastRaceId) < trimId(firstRaceId):
-			self.logger.info('WARNING: lastRaceId < firstRaceId -> {} < {}'.format(lastRaceId,firstRaceId))
-			lastRaceId = firstRaceId
+		# if trimId(lastRaceId) < trimId(firstRaceId):
+			# self.logger.info('WARNING: lastRaceId < firstRaceId -> {} < {}'.format(lastRaceId,firstRaceId))
+			# lastRaceId = firstRaceId
 
-		self.logger.info('Scrapping races from %i to %i', firstRaceId, lastRaceId)
+		#self.logger.info('Scrapping races from %i to %i', firstRaceId, lastRaceId)
+		self.logger.info('Scrapping races starting from %i', firstRaceId)
 
 		# yelds scrap requests
 		raceIdList = list(map(int, raceIdList_raw))
-		raceIdList = [i for i in raceIdList if trimId(i) >= firstRaceId and trimId(i) <= lastRaceId]
+		firstRaceId_t = trimId(firstRaceId)
+		#raceIdList = [i for i in raceIdList if trimId(i) >= firstRaceId and trimId(i) <= lastRaceId]
+		raceIdList = [i for i in raceIdList if trimId(i) >= firstRaceId_t]
 
 		self.logger.info('Number of races to scrap: %i', len(raceIdList))
 
