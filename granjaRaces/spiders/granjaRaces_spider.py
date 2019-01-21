@@ -33,10 +33,15 @@ Example DIRECT ACCESS result page:
 First Race in 2019
 	http://www.kgv.net.br/Arquivos/KGV-G-20190103174040999-Rental-Resultado.html
 
-"""
+	
+- Some new Race Ids are bigger than 16 digits, which compromises comparison.
+  Thus, some trim is needed BUT ONLY when comparing for filter purposes."""
+
+def trimId(i):
+	return int('{}'.format(i)[:16])
 
 # first race of 2019
-MIN_RACE_ID = 20190103174040999
+MIN_RACE_ID = trimId(20190103174040999)
 
 # Usable columns only
 DICT_HEADER = {
@@ -73,22 +78,31 @@ class GranjaRaceSpider(scrapy.Spider):
 		raceIdList_raw = response.css('a').re(r'Results\.aspx\?.+\&amp;way=\.\.\/Arquivos\/KGV-G-(.+)-Rental-Resultado\.html')
 		self.logger.debug('RAW raceIdList -> ' + ','.join(raceIdList_raw))
 
-		firstRaceId = int(getattr(self, 'begin', -1))
+		self.logger.info('Number of RAW races at result page: %i', len(raceIdList_raw))
+		
+		firstRaceId = int(getattr(self, 'begin', MIN_RACE_ID)) # us AS IS (dont trim here!)
+		self.logger.info('PARAM firstRaceId = {}'.format(firstRaceId))
 		if firstRaceId < MIN_RACE_ID:
 			firstRaceId = MIN_RACE_ID
 		
-		lastRaceId = int(getattr(self, 'end', -1))
+		lastRaceId = int(getattr(self, 'end', -1)) # use AS IS (dont trim here!)
+		self.logger.info('PARAM lastRaceId = {}'.format(lastRaceId))
 		if lastRaceId < 0:
 			lastRaceId = int(max(raceIdList_raw))
+			self.logger.info('MAX lastRaceId from raceIdList_raw = {}'.format(lastRaceId))
 
-		if lastRaceId < firstRaceId:
+		if trimId(lastRaceId) < trimId(firstRaceId):
+			self.logger.info('WARNING: lastRaceId < firstRaceId -> {} < {}'.format(lastRaceId,firstRaceId))
 			lastRaceId = firstRaceId
 
 		self.logger.info('Scrapping races from %i to %i', firstRaceId, lastRaceId)
 
 		# yelds scrap requests
 		raceIdList = list(map(int, raceIdList_raw))
-		raceIdList = [i for i in raceIdList if i >= firstRaceId and i <= lastRaceId]
+		raceIdList = [i for i in raceIdList if trimId(i) >= firstRaceId and trimId(i) <= lastRaceId]
+
+		self.logger.info('Number of races to scrap: %i', len(raceIdList))
+
 		for raceId in raceIdList:
 			# url = '%s?tipo=%i&id=%i' % (RESULT_URL, RESULT_TYPE, raceId)
 			url = 'http://www.kgv.net.br/Arquivos/KGV-G-%d-Rental-Resultado.html' % (raceId)
