@@ -194,15 +194,16 @@ def persistLastRaceId():
 	con = sqlite3.connect(PATH_GRANJA_DB)
 	con.row_factory = sqlite3.Row
 	db_cur = con.cursor()
-	db_cur.execute('SELECT MAX(raceID) as lastRaceId FROM races;')
+	#db_cur.execute('SELECT MAX(raceID) as lastRaceId FROM races;')
+	db_cur.execute('SELECT raceID,substr(raceID,1,16) as T FROM races ORDER BY T DESC LIMIT 1;')
 	result = db_cur.fetchone()
 	con.close()
 
 	filename = './lastRaceId'
 	with open(filename, 'wb') as file:
-		file.write(str.encode("{}\n".format(result['lastRaceId'])))
+		file.write(str.encode("{}\n".format(result['raceID'])))
 
-	logger.info("LAST RACE ID = %d" % result['lastRaceId'])
+	logger.info("LAST RACE ID = %d" % result['raceID'])
 	
 ################################################################################
 # MAIN
