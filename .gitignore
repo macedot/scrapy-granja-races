@@ -96,3 +96,5 @@ lastRaceId
 backup/
 log/
 
+
+\.vscode/

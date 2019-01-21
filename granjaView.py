@@ -12,6 +12,14 @@ import htmlmin
 
 from prettytable import from_db_cursor
 
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib import pyplot
+import numpy
+from io import BytesIO
+import base64
+import math
+
 ################################################################################
 # STATIC DEF
 ################################################################################
@@ -24,6 +32,72 @@ PATH_GRANJA_DB = './granjaResult.sqlite'
 
 ################################################################################
 ################################################################################
+def getKartBestLaps(kartNumber,trackConfig):
+	resultList = []
+
+	try:
+		con = sqlite3.connect(PATH_GRANJA_DB)
+		con.row_factory = sqlite3.Row
+		db_cur = con.cursor()
+		db_cur.execute(f'''
+			SELECT bestLapTime
+			FROM races
+			WHERE raceId in (SELECT raceId FROM LAST_RACES)
+				AND kartNumber = '{kartNumber}'
+				AND trackConfig = '{trackConfig}'
+				AND bestLapTime is not null
+		;''')
+		
+		for row in db_cur:
+			resultList.append(row['bestLapTime'])
+		con.close()
+		resultList.sort()
+
+	except (sqlite3.Error, x) as e:
+		if con:
+			con.rollback()
+		logging.error("Error %s:" % e.args[0])
+
+	return resultList
+
+################################################################################
+################################################################################
+
+def getKartList(trackConfig):
+	resultList = []
+
+	try:
+		con = sqlite3.connect(PATH_GRANJA_DB)
+		con.row_factory = sqlite3.Row
+		db_cur = con.cursor()
+		db_cur.execute(f'''
+		SELECT * FROM (
+			SELECT kartNumber,COUNT(raceId) AS QT
+			FROM races
+			WHERE raceId in (SELECT raceId FROM LAST_RACES)
+			AND trackConfig = '{trackConfig}'
+			AND bestLapTime is not null
+			GROUP BY kartNumber
+			ORDER BY kartNumber
+		)
+		WHERE QT > 10
+		;''')
+		
+		for row in db_cur:
+			resultList.append(row['kartNumber'])
+		con.close()
+		resultList.sort()
+
+	except sqlite3.Error as e:
+		if con:
+			con.rollback()
+		logging.error("Error %s:" % e.args[0])
+
+	return resultList
+
+################################################################################
+################################################################################
+
 def tableData2Html(tableName):
 	htmlcode = """<html><head><title>%s</title><link href="/static/style.css" rel="stylesheet"></head>
 	<body><div style="align:center; font:bold 10pt Verdana; width:100%%;">%s</div>""" % (tableName,tableName)
@@ -96,11 +170,56 @@ class granjaView(object):
 	def CKC_BI_RENTAL(self):
 		return tableData2Html('CKC_BI_RENTAL')
 
+	@cherrypy.expose
+	def KARTHIST(self, kartNumber = 1, trackConfig = '0101'):
+		# return f'<img src="data:image/png;base64,{self.image_base64(kartNumber,trackConfig)}" width="320" height="240" border="0" />'
+		return f'<img src="data:image/png;base64,{self.image_base64(kartNumber,trackConfig)}" border="0" />'
+
+	def image_base64(self, kartNumber = 1, trackConfig = '0101'):
+		kartList = getKartList(trackConfig)
+		numOfKarts = len(kartList)
+		pyplot.gcf().clear()
+
+		# bestLapList = getKartBestLaps(kartNumber,trackConfig)
+		# totalRaces = len(bestLapList)
+		# n, bins, patches = pyplot.hist(x=bestLapList, bins='auto', color='#0504aa', alpha=0.7, rwidth=0.85)
+		# pyplot.grid(axis='y', alpha=0.75)
+		# pyplot.xlabel('Best Laptime')
+		# pyplot.ylabel('Frequency')
+		# pyplot.title(f'{kartNumber} @ {trackConfig}')
+		# pyplot.text(0.5, 0.5, f'N = {totalRaces}', fontsize=12)
+		# maxfreq = n.max()
+		# pyplot.ylim(ymax=numpy.ceil(maxfreq / 10) * 10 if maxfreq % 10 else maxfreq + 10)
+
+		pyplot.margins(0,0)
+		fig = pyplot.figure()
+		fig.set_size_inches(10, 10, forward=True)
+		cols = 5
+		rows = int(math.ceil(numOfKarts/cols))
+		for i, kartNumber in enumerate((kartList)):
+			ax = fig.add_subplot(rows,cols,i+1)
+			ax.text(0.05, 0.95, kartNumber, transform=ax.transAxes, fontsize=16, fontweight='bold', va='top')
+			bestLapList = getKartBestLaps(kartNumber,trackConfig)
+			totalRaces = len(bestLapList)
+			n, bins, patches = ax.hist(x=bestLapList, bins='auto', color='#0504aa', alpha=0.7, rwidth=0.85)
+			ax.grid(axis='y', alpha=0.75)
+			# ax.xlabel('Best Laptime')
+			# ax.ylabel('Frequency')
+			# ax.title(f'{kartNumber} @ {trackConfig}')
+			# ax.text(0.5, 0.5, f'N = {totalRaces}', fontsize=12)
+			# maxfreq = n.max()
+			# ax.ylim(ymax=numpy.ceil(maxfreq / 10) * 10 if maxfreq % 10 else maxfreq + 10)
+
+		with BytesIO() as buffer:
+			pyplot.tight_layout()
+			pyplot.savefig(buffer, format='png')
+			return base64.b64encode(buffer.getvalue()).decode()
+
 ################################################################################
 ################################################################################
 if __name__ == '__main__':
 	cherrypy.config.update({'server.socket_host': '0.0.0.0'})
-	cherrypy.config.update({'server.socket_port': 80})
+	cherrypy.config.update({'server.socket_port': 8080})
 	conf = {
 		'/': {
 			# # 'tools.sessions.on': True,
