@@ -18,7 +18,6 @@ from matplotlib import pyplot
 import numpy
 from io import BytesIO
 import base64
-import math
 
 ################################################################################
 # STATIC DEF
@@ -171,44 +170,45 @@ class granjaView(object):
 		return tableData2Html('CKC_BI_RENTAL')
 
 	@cherrypy.expose
-	def KARTHIST(self, kartNumber = 1, trackConfig = '0101'):
-		# return f'<img src="data:image/png;base64,{self.image_base64(kartNumber,trackConfig)}" width="320" height="240" border="0" />'
-		return f'<img src="data:image/png;base64,{self.image_base64(kartNumber,trackConfig)}" border="0" />'
+	def KARTHIST(self, kartNumber = None, trackConfig = '0101'):
+		if kartNumber is None:
+			# return f'<img src="data:image/png;base64,{self.image_base64(kartNumber,trackConfig)}" width="320" height="240" border="0" />'
+			return f'<img src="data:image/png;base64,{self.plotKartHistGeral(trackConfig)}" border="0" />'
+		return f'<img src="data:image/png;base64,{self.plotKartHist(kartNumber,trackConfig)}" border="0" />'
 
-	def image_base64(self, kartNumber = 1, trackConfig = '0101'):
+	def plotKartHist(self, kartNumber = 1, trackConfig = '0101'):
+		pyplot.gcf().clear()
+		pyplot.margins(0,0)
+		fig = pyplot.figure()
+		fig.set_size_inches(3, 2, forward=True)
+		bestLapList = getKartBestLaps(kartNumber,trackConfig)
+		n, bins, patches = pyplot.hist(x=bestLapList, bins='auto', color='#0504aa', alpha=0.7, rwidth=0.85)
+		pyplot.grid(axis='y', alpha=0.75)
+		fig.text(0.75, 0.85, kartNumber, fontsize=16, fontweight='bold', va='top')
+		maxfreq = n.max()
+		pyplot.ylim(top=numpy.ceil(maxfreq / 5) * 5 if maxfreq % 5 else maxfreq + 5)
+
+		with BytesIO() as buffer:
+			pyplot.tight_layout()
+			pyplot.savefig(buffer, format='png')
+			return base64.b64encode(buffer.getvalue()).decode()
+
+	def plotKartHistGeral(self, trackConfig = '0101'):
 		kartList = getKartList(trackConfig)
 		numOfKarts = len(kartList)
 		pyplot.gcf().clear()
-
-		# bestLapList = getKartBestLaps(kartNumber,trackConfig)
-		# totalRaces = len(bestLapList)
-		# n, bins, patches = pyplot.hist(x=bestLapList, bins='auto', color='#0504aa', alpha=0.7, rwidth=0.85)
-		# pyplot.grid(axis='y', alpha=0.75)
-		# pyplot.xlabel('Best Laptime')
-		# pyplot.ylabel('Frequency')
-		# pyplot.title(f'{kartNumber} @ {trackConfig}')
-		# pyplot.text(0.5, 0.5, f'N = {totalRaces}', fontsize=12)
-		# maxfreq = n.max()
-		# pyplot.ylim(ymax=numpy.ceil(maxfreq / 10) * 10 if maxfreq % 10 else maxfreq + 10)
 
 		pyplot.margins(0,0)
 		fig = pyplot.figure()
 		fig.set_size_inches(10, 10, forward=True)
 		cols = 5
-		rows = int(math.ceil(numOfKarts/cols))
+		rows = int(numpy.ceil(numOfKarts/cols))
 		for i, kartNumber in enumerate((kartList)):
 			ax = fig.add_subplot(rows,cols,i+1)
 			ax.text(0.75, 0.95, kartNumber, transform=ax.transAxes, fontsize=16, fontweight='bold', va='top')
 			bestLapList = getKartBestLaps(kartNumber,trackConfig)
-			totalRaces = len(bestLapList)
-			n, bins, patches = ax.hist(x=bestLapList, bins='auto', color='#0504aa', alpha=0.7, rwidth=0.85)
+			ax.hist(x=bestLapList, bins='auto', color='#0504aa', alpha=0.7, rwidth=0.85)
 			ax.grid(axis='y', alpha=0.75)
-			# ax.xlabel('Best Laptime')
-			# ax.ylabel('Frequency')
-			# ax.title(f'{kartNumber} @ {trackConfig}')
-			# ax.text(0.5, 0.5, f'N = {totalRaces}', fontsize=12)
-			# maxfreq = n.max()
-			# ax.ylim(ymax=numpy.ceil(maxfreq / 10) * 10 if maxfreq % 10 else maxfreq + 10)
 
 		with BytesIO() as buffer:
 			pyplot.tight_layout()
