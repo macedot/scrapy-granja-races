@@ -83,7 +83,7 @@ def updateStatistics():
 
 	dbCursor.execute('''DROP TABLE IF EXISTS RENTAL_RANKING_LAPTIME_C_MODA;''')
 	dbCursor.execute('''CREATE TABLE RENTAL_RANKING_LAPTIME_C_MODA AS
-		SELECT kartNumber, driverName, MIN(bestLapTime) AS 'BEST_LAP', AVG(bestLapTime) AS 'AVG_LAP'
+		SELECT kartNumber, driverName, MIN(bestLapTime) AS 'BEST_LAP', AVG(bestLapTime) AS 'AVG_BEST_LAP'
 		FROM races
 		WHERE 
 			raceId IN (SELECT raceId FROM LAST_RACES)
@@ -119,7 +119,7 @@ def updateStatistics():
 	####################
 	dbCursor.execute('''DROP TABLE IF EXISTS RENTAL_KART_POS_FINISH;''')
 	dbCursor.execute('''CREATE TABLE RENTAL_KART_POS_FINISH AS
-		SELECT kartNumber, racePosition, COUNT(*) AS posCount
+		SELECT kartNumber, racePosition, COUNT(*) AS posCount, SUM(numOfLaps) AS numOfLaps
 		FROM races
 		WHERE raceId IN (SELECT raceId FROM LAST_RACES)
 			AND driverClass='RENTAL' 
@@ -139,6 +139,7 @@ def updateStatistics():
 		FROM (
 			SELECT kartNumber,
 				SUM(posCount) AS qtRaces
+				,SUM(numOfLaps) AS qtLaps
 				,(SELECT i.posCount FROM RENTAL_KART_POS_FINISH i WHERE e.kartNumber=i.kartNumber AND i.racePosition=1) AS qt1
 				,(SELECT i.posCount FROM RENTAL_KART_POS_FINISH i WHERE e.kartNumber=i.kartNumber AND i.racePosition=2) AS qt2
 				,(SELECT i.posCount FROM RENTAL_KART_POS_FINISH i WHERE e.kartNumber=i.kartNumber AND i.racePosition=3) AS qt3
@@ -160,11 +161,11 @@ def updateStatistics():
 	dbCursor.execute('''DROP TABLE IF EXISTS CKC_BI_RENTAL;''')
 	dbCursor.execute('''CREATE TABLE CKC_BI_RENTAL AS
 		SELECT P.kartNumber
-			,P.qt1,P.qt2,P.qt3,P.qt4,P.qt5,P.qt6,P.qtRaces
+			,P.qt1,P.qt2,P.qt3,P.qt4,P.qt5,P.qt6,P.qtRaces,P.qtLaps
 			,P.PODIUM_RATE
 			,P.rowid AS RANK_PODIUM
 			,T.BEST_LAP
-			,T.AVG_LAP
+			,T.AVG_BEST_LAP
 			,T.rowid AS RANK_LAPTIME
 			,0.0125 * (P.rowid + T.rowid) AS SCORE
 		FROM TEMP_RENTAL_RANKING_PODIUM P,TEMP_RENTAL_RANKING_LAPTIME_C_MODA T
