@@ -6,15 +6,18 @@ import re
 import sys
 import time
 import sqlite3
-import cherrypy
 import logging
+import collections
+from statistics import median
+
+import cherrypy
 import htmlmin
-
 from prettytable import from_db_cursor
-
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib import pyplot
+from matplotlib import rcParams
+from matplotlib.ticker import FormatStrFormatter
 import numpy
 from io import BytesIO
 import base64
@@ -27,6 +30,36 @@ PATH_GRANJA_DB = './granjaResult.sqlite'
 ################################################################################
 # GLOBAL DEF
 ################################################################################
+
+
+################################################################################
+################################################################################
+def getBestLaps(trackConfig):
+	resultList = []
+
+	try:
+		con = sqlite3.connect(PATH_GRANJA_DB)
+		con.row_factory = sqlite3.Row
+		db_cur = con.cursor()
+		db_cur.execute(f'''
+			SELECT bestLapTime
+			FROM races
+			WHERE raceId in (SELECT raceId FROM LAST_RACES)
+				AND trackConfig = '{trackConfig}'
+				AND bestLapTime is not null
+		;''')
+		
+		for row in db_cur:
+			resultList.append(row['bestLapTime'])
+		con.close()
+		resultList.sort()
+
+	except (sqlite3.Error, x) as e:
+		if con:
+			con.rollback()
+		logging.error("Error %s:" % e.args[0])
+
+	return resultList
 
 
 ################################################################################
@@ -173,7 +206,7 @@ class granjaView(object):
 	def KARTHIST(self, kartNumber = None, trackConfig = '0101'):
 		if kartNumber is None:
 			# return f'<img src="data:image/png;base64,{self.image_base64(kartNumber,trackConfig)}" width="320" height="240" border="0" />'
-			return f'<img src="data:image/png;base64,{self.plotKartHistGeral(trackConfig)}" border="0" />'
+			return f'<img src="data:image/png;base64,{self.plotKartHistAll(trackConfig)}" border="0" />'
 		return f'<img src="data:image/png;base64,{self.plotKartHist(kartNumber,trackConfig)}" border="0" />'
 
 	def plotKartHist(self, kartNumber = 1, trackConfig = '0101'):
@@ -193,7 +226,7 @@ class granjaView(object):
 			pyplot.savefig(buffer, format='png')
 			return base64.b64encode(buffer.getvalue()).decode()
 
-	def plotKartHistGeral(self, trackConfig = '0101'):
+	def plotKartHistAll(self, trackConfig = '0101'):
 		kartList = getKartList(trackConfig)
 		numOfKarts = len(kartList)
 		pyplot.gcf().clear()
@@ -209,6 +242,69 @@ class granjaView(object):
 			bestLapList = getKartBestLaps(kartNumber,trackConfig)
 			ax.hist(x=bestLapList, bins='auto', color='#0504aa', alpha=0.7, rwidth=0.85)
 			ax.grid(axis='y', alpha=0.75)
+
+		with BytesIO() as buffer:
+			pyplot.tight_layout()
+			pyplot.savefig(buffer, format='png')
+			return base64.b64encode(buffer.getvalue()).decode()
+
+	@cherrypy.expose
+	def KARTBOXPLOT(self, kartNumber = None, trackConfig = '0101'):
+		if kartNumber is None:
+			return f'<img src="data:image/png;base64,{self.plotKartBoxplotAll(trackConfig)}" border="0" />'
+		return f'<img src="data:image/png;base64,{self.plotKartBoxplot(kartNumber,trackConfig)}" border="0" />'
+
+	def plotKartBoxplot(self, kartNumber = 1, trackConfig = '0101'):
+		pyplot.gcf().clear()
+		pyplot.margins(0,0)
+		fig = pyplot.figure()
+		fig.set_size_inches(3, 2, forward=True)
+		bestLapList = getKartBestLaps(kartNumber,trackConfig)
+		pyplot.boxplot(bestLapList, 0, 'gD', 1, 0.75)
+
+		with BytesIO() as buffer:
+			pyplot.tight_layout()
+			pyplot.savefig(buffer, format='png')
+			return base64.b64encode(buffer.getvalue()).decode()
+
+	def plotKartBoxplotAll(self, trackConfig = '0101'):
+		kartList = getKartList(trackConfig)
+		allLaps = getBestLaps(trackConfig)
+		genMedian = median(allLaps)
+		dictLaps = {}
+		dictSort = {}
+		for kartNumber in kartList:
+			dictLaps[kartNumber] = getKartBestLaps(kartNumber,trackConfig)
+			#dictSort[kartNumber] = median(dictLaps[kartNumber])
+			dictSort[kartNumber] = min(dictLaps[kartNumber])
+		
+		xvalues = []
+		bestLapList = []
+		for kartNumber, theMedian in sorted(dictSort.items(), key=lambda x: x[1], reverse=True):
+			xvalues.append(kartNumber)
+			bestLapList.append(dictLaps[kartNumber])
+
+		rcParams['ytick.direction'] = 'out'
+		rcParams['xtick.direction'] = 'out'
+		pyplot.gcf().clear()
+		pyplot.margins(0,0)
+		fig = pyplot.figure()
+		fig.set_size_inches(5, 10, forward=True)
+		ax = fig.add_subplot(111)
+		ax.boxplot(bestLapList, 0, 'gD', 0, 0.75)
+		ax.set_yticks(numpy.arange(len(xvalues))+1)
+		ax.set_yticklabels(xvalues, rotation=0, ha='right')
+		fig.subplots_adjust(bottom=0.3)
+		minLap = int(numpy.floor(min(allLaps)))
+		maxLap = int(numpy.ceil(max(allLaps)))
+		xlabels = xticks = numpy.linspace(minLap, maxLap, 5)
+		ax.set_xticks(xticks)
+		ax.set_xticklabels(xlabels)
+		ax.tick_params(axis='x', pad=10)
+		ax.tick_params(axis='y', pad=10)
+		ax.xaxis.set_major_formatter(FormatStrFormatter('%.0f'))
+		ax.xaxis.grid(True, linestyle='-', which='major', color='lightgrey', alpha=0.5)
+		ax.axvline(x=genMedian)
 
 		with BytesIO() as buffer:
 			pyplot.tight_layout()
