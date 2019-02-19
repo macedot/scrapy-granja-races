@@ -31,7 +31,6 @@ PATH_GRANJA_DB = './granjaResult.sqlite'
 # GLOBAL DEF
 ################################################################################
 
-
 ################################################################################
 ################################################################################
 def getBestLaps(trackConfig):
@@ -60,8 +59,6 @@ def getBestLaps(trackConfig):
 		logging.error("Error %s:" % e.args[0])
 
 	return resultList
-
-
 ################################################################################
 ################################################################################
 def getKartBestLaps(kartNumber,trackConfig):
@@ -91,10 +88,38 @@ def getKartBestLaps(kartNumber,trackConfig):
 		logging.error("Error %s:" % e.args[0])
 
 	return resultList
-
 ################################################################################
 ################################################################################
+def getTrackConfigModa():
+	resultValue = '0101'
 
+	try:
+		con = sqlite3.connect(PATH_GRANJA_DB)
+		con.row_factory = sqlite3.Row
+		db_cur = con.cursor()
+		db_cur.execute(f'''
+		SELECT trackConfig,COUNT(raceId) AS QT
+		FROM races
+		WHERE raceId in (SELECT raceId FROM LAST_RACES)
+		AND bestLapTime is not null
+		GROUP BY trackConfig
+		ORDER BY QT DESC
+		LIMIT 1
+		;''')
+		
+		for row in db_cur:
+			resultValue = row['trackConfig']
+			break
+		con.close()
+
+	except sqlite3.Error as e:
+		if con:
+			con.rollback()
+		logging.error("Error %s:" % e.args[0])
+
+	return resultValue
+################################################################################
+################################################################################
 def getKartList(trackConfig):
 	resultList = []
 
@@ -103,7 +128,7 @@ def getKartList(trackConfig):
 		con.row_factory = sqlite3.Row
 		db_cur = con.cursor()
 		db_cur.execute(f'''
-		SELECT * FROM (
+		-- SELECT * FROM (
 			SELECT kartNumber,COUNT(raceId) AS QT
 			FROM races
 			WHERE raceId in (SELECT raceId FROM LAST_RACES)
@@ -111,8 +136,7 @@ def getKartList(trackConfig):
 			AND bestLapTime is not null
 			GROUP BY kartNumber
 			ORDER BY kartNumber
-		)
-		WHERE QT > 10
+		-- ) WHERE QT > 10
 		;''')
 		
 		for row in db_cur:
@@ -126,10 +150,8 @@ def getKartList(trackConfig):
 		logging.error("Error %s:" % e.args[0])
 
 	return resultList
-
 ################################################################################
 ################################################################################
-
 def tableData2Html(tableName):
 	htmlcode = """<html><head><title>%s</title><link href="/static/style.css" rel="stylesheet"></head>
 	<body><div style="align:center; font:bold 10pt Verdana; width:100%%;">%s</div>""" % (tableName,tableName)
@@ -155,7 +177,6 @@ def tableData2Html(tableName):
 		logging.error("Error %s:" % e.args[0])
 
 	return htmlcodemin
-
 ################################################################################
 ################################################################################
 class granjaView(object):
@@ -203,13 +224,17 @@ class granjaView(object):
 		return tableData2Html('CKC_BI_RENTAL')
 
 	@cherrypy.expose
-	def KARTHIST(self, kartNumber = None, trackConfig = '0101'):
+	def KARTHIST(self, kartNumber = None, trackConfig = None):
+		if trackConfig is None:
+			trackConfig = getTrackConfigModa()
 		if kartNumber is None:
 			# return f'<img src="data:image/png;base64,{self.image_base64(kartNumber,trackConfig)}" width="320" height="240" border="0" />'
 			return f'<img src="data:image/png;base64,{self.plotKartHistAll(trackConfig)}" border="0" />'
 		return f'<img src="data:image/png;base64,{self.plotKartHist(kartNumber,trackConfig)}" border="0" />'
 
-	def plotKartHist(self, kartNumber = 1, trackConfig = '0101'):
+	def plotKartHist(self, kartNumber = 1, trackConfig = None):
+		if trackConfig is None:
+			trackConfig = getTrackConfigModa()
 		pyplot.gcf().clear()
 		pyplot.margins(0,0)
 		fig = pyplot.figure()
@@ -226,7 +251,9 @@ class granjaView(object):
 			pyplot.savefig(buffer, format='png')
 			return base64.b64encode(buffer.getvalue()).decode()
 
-	def plotKartHistAll(self, trackConfig = '0101'):
+	def plotKartHistAll(self, trackConfig = None):
+		if trackConfig is None:
+			trackConfig = getTrackConfigModa()
 		kartList = getKartList(trackConfig)
 		numOfKarts = len(kartList)
 		pyplot.gcf().clear()
@@ -249,12 +276,16 @@ class granjaView(object):
 			return base64.b64encode(buffer.getvalue()).decode()
 
 	@cherrypy.expose
-	def KARTBOXPLOT(self, kartNumber = None, trackConfig = '0101'):
+	def KARTBOXPLOT(self, kartNumber = None, trackConfig = None):
+		if trackConfig is None:
+			trackConfig = getTrackConfigModa()
 		if kartNumber is None:
 			return f'<img src="data:image/png;base64,{self.plotKartBoxplotAll(trackConfig)}" border="0" />'
 		return f'<img src="data:image/png;base64,{self.plotKartBoxplot(kartNumber,trackConfig)}" border="0" />'
 
-	def plotKartBoxplot(self, kartNumber = 1, trackConfig = '0101'):
+	def plotKartBoxplot(self, kartNumber = 1, trackConfig = None):
+		if trackConfig is None:
+			trackConfig = getTrackConfigModa()
 		pyplot.gcf().clear()
 		pyplot.margins(0,0)
 		fig = pyplot.figure()
@@ -267,7 +298,9 @@ class granjaView(object):
 			pyplot.savefig(buffer, format='png')
 			return base64.b64encode(buffer.getvalue()).decode()
 
-	def plotKartBoxplotAll(self, trackConfig = '0101'):
+	def plotKartBoxplotAll(self, trackConfig = None):
+		if trackConfig is None:
+			trackConfig = getTrackConfigModa()
 		kartList = getKartList(trackConfig)
 		allLaps = getBestLaps(trackConfig)
 		genMedian = median(allLaps)
@@ -276,7 +309,12 @@ class granjaView(object):
 		for kartNumber in kartList:
 			dictLaps[kartNumber] = getKartBestLaps(kartNumber,trackConfig)
 			#dictSort[kartNumber] = median(dictLaps[kartNumber])
-			dictSort[kartNumber] = min(dictLaps[kartNumber])
+			#dictSort[kartNumber] = min(dictLaps[kartNumber])
+			quartile_1, quartile_3 = numpy.percentile(dictLaps[kartNumber], [25, 75])
+			iqr = quartile_3 - quartile_1
+			lower_bound = quartile_1 - (iqr * 0.75)
+			listLapF = [i for i in dictLaps[kartNumber] if i>= lower_bound]
+			dictSort[kartNumber] = min(listLapF)
 		
 		xvalues = []
 		bestLapList = []
@@ -315,7 +353,7 @@ class granjaView(object):
 ################################################################################
 if __name__ == '__main__':
 	cherrypy.config.update({'server.socket_host': '0.0.0.0'})
-	cherrypy.config.update({'server.socket_port': 8080})
+	cherrypy.config.update({'server.socket_port': 80})
 	conf = {
 		'/': {
 			# # 'tools.sessions.on': True,
@@ -331,4 +369,3 @@ if __name__ == '__main__':
 		}
 	}
 	cherrypy.quickstart(granjaView(), '/', conf)
-

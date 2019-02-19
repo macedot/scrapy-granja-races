@@ -122,17 +122,17 @@ class GranjaRaceSpider(scrapy.Spider):
 			self.logger.error('Invalid URL: ' + response.url)
 			return
 
-		# filter body only with 'GRANJA VIANA'
-		if 'GRANJA VIANA' not in response.text:
-			self.logger.warning('Skipping RACE (Not GRANJA VIANA): ' + raceIdKGV)
-			return
-
 		# discart INTERLAGOS races (for now...)
 		if 'INTERLAGOS' in response.text:
 			self.logger.warning('Skipping RACE (INTERLAGOS): ' + raceIdKGV)
 			return
 
 		# filter body only with 'GRANJA VIANA'
+		if 'GRANJA VIANA' not in response.text and 'GRANJAVIANA' not in response.text:
+			self.logger.warning('Skipping RACE (' + response.text + '): ' + raceIdKGV)
+			return
+
+			# filter body only with 'GRANJA VIANA'
 		if 'RENTAL' not in response.text:
 			self.logger.warning('Skipping RACE (Not RENTAL): ' + raceIdKGV)
 			return
