@@ -1,5 +1,5 @@
 # scrapyGranja
-Scrapy implementation of Kartodromo Granja Viana go-kart race results
+Scrapy implementation for Kartodromo Granja Viana go-kart race results
 
 ## Dependencies
 ### Back-end
