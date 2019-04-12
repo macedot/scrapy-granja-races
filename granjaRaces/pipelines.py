@@ -36,6 +36,7 @@ class GranjaRaces(DeclarativeBase):
 	kartNumber = Column('kartNumber', Integer)
 	driverName = Column('driverName', String)
 	driverClass = Column('driverClass', String)
+	raceType = Column('raceType', String)
 	# comments = Column('comments', String)
 	# points = Column('points', Integer)
 	numOfLaps = Column('numOfLaps', Integer)

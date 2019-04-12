@@ -31,7 +31,7 @@ if [ ! -f "${granjaView_py}" ]; then
 fi
 
 while(true); do
-	$PYTHON ${granjaView_py}
+	$PYTHON ${granjaView_py} 2>&1 | tee -a log.txt
 	sleep 3
 done
 

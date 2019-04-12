@@ -13,6 +13,11 @@ def intCheckDQ(str):
 		return 99
 	return int(str)
 
+def strRaceType(str):
+	if 'INTERLAGOS' in str:
+		return 'INTERLAGOS'
+	return 'GRANJA'
+
 def strTimeToFloat(str):
 	str = str.replace(',', '.') # pt_BR time format
 	if '.' not in str:
@@ -78,6 +83,10 @@ class GranjaRacesItem(scrapy.Item):
     )
 	bestLapTime = scrapy.Field(
         input_processor=MapCompose(strTimeToFloat),
+        output_processor=TakeFirst(),
+    )
+	raceType = scrapy.Field(
+        input_processor=MapCompose(strRaceType),
         output_processor=TakeFirst(),
     )
 	# diffToLeader = scrapy.Field()

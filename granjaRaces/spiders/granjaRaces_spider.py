@@ -40,6 +40,12 @@ First Race in 2019
 def trimId(i):
 	return int('{}'.format(i)[:16])
 
+def pair(a):
+   # Or simply:
+   # return zip(a[::2], a[1::2])
+   for k, v in zip(a[::2], a[1::2]):
+       yield k, v
+
 # first race of 2019
 MIN_RACE_ID = trimId(20190103174040999)
 
@@ -48,7 +54,7 @@ DICT_HEADER = {
 	u'POS' : 'racePosition',
 	u'NO.' : 'kartNumber',
 	u'NOME' : 'driverName',
-	u'CLASSE' : 'driverClass',		# RENTAL
+	u'CLASSE' : 'driverClass',		# RENTAL (Granja) | INDOOR (Interlagos)
 	u'VOLTAS' : 'numOfLaps',
 	u'TOTAL TEMPO' : 'raceTime',
 	u'MELHOR TEMPO' : 'bestLapTime'
@@ -61,8 +67,6 @@ class GranjaRaceSpider(scrapy.Spider):
 		return [scrapy.Request('http://www.kgv.net.br/resultados/Default.aspx', callback = self.result_list)]
 
 	def result_list(self, response):
-		# $> scrapy crawl granjaRaces -a begin=36620 -a end=36642
-		
 		"""
 		http://www.kgv.net.br/resultados/Results.aspx?UserId=&way=../Arquivos/KGV-G-20190117001238969-Rental-Resultado.html&year=2019&month=Janeiro&day=Todos
 
@@ -73,10 +77,16 @@ class GranjaRaceSpider(scrapy.Spider):
 			&month=Janeiro
 			&day=Todos
 		""" 
+
+		list_raw = response.css('a').re(r'Results\.aspx\?.+\&amp;way=\.\.\/Arquivos\/KGV-G-(.+)-(.+)-Resultado\.html')
+		self.logger.debug('RAW raceIdList -> ' + ','.join(list_raw))
 		
-		# get the list of available race results for current result page (default: current month)
-		raceIdList_raw = response.css('a').re(r'Results\.aspx\?.+\&amp;way=\.\.\/Arquivos\/KGV-G-(.+)-Rental-Resultado\.html')
-		self.logger.debug('RAW raceIdList -> ' + ','.join(raceIdList_raw))
+		theList = list(pair(list_raw))
+		raceIdList_raw = []
+		raceTypeList_raw = []
+		for raceId, raceType in theList:
+			raceIdList_raw.append(raceId)
+			raceTypeList_raw.append(raceType)
 
 		self.logger.info('Number of RAW races at result page: %i', len(raceIdList_raw))
 		
@@ -85,75 +95,71 @@ class GranjaRaceSpider(scrapy.Spider):
 		if firstRaceId < MIN_RACE_ID:
 			firstRaceId = MIN_RACE_ID
 		
-		# lastRaceId = int(getattr(self, 'end', -1)) # use AS IS (dont trim here!)
-		# self.logger.info('PARAM lastRaceId = {}'.format(lastRaceId))
-		# if lastRaceId < 0:
-			# lastRaceId = int(max(raceIdList_raw))
-			# self.logger.info('MAX lastRaceId from raceIdList_raw = {}'.format(lastRaceId))
-
-		# if trimId(lastRaceId) < trimId(firstRaceId):
-			# self.logger.info('WARNING: lastRaceId < firstRaceId -> {} < {}'.format(lastRaceId,firstRaceId))
-			# lastRaceId = firstRaceId
-
-		#self.logger.info('Scrapping races from %i to %i', firstRaceId, lastRaceId)
 		self.logger.info('Scrapping races starting from %i', firstRaceId)
 
-		# yelds scrap requests
-		raceIdList = list(map(int, raceIdList_raw))
 		firstRaceId_t = trimId(firstRaceId)
-		#raceIdList = [i for i in raceIdList if trimId(i) >= firstRaceId and trimId(i) <= lastRaceId]
-		raceIdList = [i for i in raceIdList if trimId(i) >= firstRaceId_t]
+		self.logger.info('firstRaceId_t: %i', firstRaceId_t)
+		# raceIdList = list(map(int, raceIdList_raw))
+		# raceIdList = [i for i in raceIdList if trimId(i) >= firstRaceId_t]
+		#self.logger.info('Number of races to scrap: %i', len(raceIdList))
 
-		self.logger.info('Number of races to scrap: %i', len(raceIdList))
-
-		for raceIdKGV in raceIdList:
-			# url = '%s?tipo=%i&id=%i' % (RESULT_URL, RESULT_TYPE, raceIdKGV)
-			url = 'http://www.kgv.net.br/Arquivos/KGV-G-%d-Rental-Resultado.html' % (raceIdKGV)
-			self.logger.debug('yielding a start url: %s' % url)
-			yield scrapy.Request(url, callback=self.parse)
+		for raceIdKGV, raceType in theList:
+			if trimId(raceIdKGV) >= firstRaceId_t:
+				url = 'http://www.kgv.net.br/Arquivos/KGV-G-%d-%s-Resultado.html' % (int(raceIdKGV),raceType)
+				self.logger.debug('yielding a start url: %s' % url)
+				yield scrapy.Request(url, callback=self.parse)
 
 	def parse(self, response):
-		# http://www.kgv.net.br/Arquivos/KGV-G-20190103174040999-Rental-Resultado.html
 		self.logger.debug('response.url = [' + response.url + ']')
 
 		try:
-			raceIdKGV = re.search(r'Arquivos\/KGV-G-(.+)-Rental-Resultado\.html', response.url).group(1)
+			raceIdKGV,raceType = re.search(r'Arquivos\/KGV-G-(.+)-(.+)-Resultado\.html', response.url).group(1, 2)
 		except AttributeError:
 			self.logger.error('Invalid URL: ' + response.url)
 			return
 
-		# discart INTERLAGOS races (for now...)
-		if 'INTERLAGOS' in response.text:
-			self.logger.warning('Skipping RACE (INTERLAGOS): ' + raceIdKGV)
-			return
+		responseUpper = response.text.upper()
 
-		# filter body only with 'GRANJA VIANA'
-		if 'GRANJA VIANA' not in response.text and 'GRANJAVIANA' not in response.text:
-			self.logger.warning('Skipping RACE (' + response.text + '): ' + raceIdKGV)
-			return
-
+		if 'INTERLAGOS' in raceType.upper():
+			# discart INTERLAGOS races (for now...)
+			if 'INTERLAGOS' not in responseUpper:
+				self.logger.warning('Skipping invalid RACE (INTERLAGOS): ' + raceIdKGV)
+				return
+		else:
 			# filter body only with 'GRANJA VIANA'
-		if 'RENTAL' not in response.text:
-			self.logger.warning('Skipping RACE (Not RENTAL): ' + raceIdKGV)
-			return
+			if 'GRANJA VIANA' not in responseUpper and 'GRANJAVIANA' not in responseUpper:
+				self.logger.warning('Skipping RACE (' + responseUpper + '): ' + raceIdKGV)
+				return
+			# filter body only with 'GRANJA VIANA'
+			if 'RENTAL' not in responseUpper:
+				self.logger.warning('Skipping RACE (Not RENTAL): ' + raceIdKGV)
+				return
 			
 		self.logger.info('Scrapping RACE: %s' % raceIdKGV)
 		self.persistToFile(raceIdKGV, response)
 
 		# get track configuration
 		# KARTODROMO INTERNACIONAL GRANJA VIANA KGV RACE TRACKS - CIRCUITO 01
+		#or
+		# KGV ALPIE INTERLAGOS CIRCUITO 2
 		headerbig = response.css('div.headerbig::text').extract_first()
 		if headerbig is None:
 			self.logger.error('Missing headerbig (%s)' % raceIdKGV)
 			return
 		
-		if '-' not in headerbig:
-			self.logger.error('INVALID HEADER (Missing separator): %s' % headerbig)
-			return
+		headerUpper = headerbig.upper()
+		if 'INTERLAGOS' in raceType.upper():
+			# discart INTERLAGOS races (for now...)
+			if 'INTERLAGOS' not in headerUpper:
+				self.logger.error('INVALID INTERLAGOS HEADER: %s' % headerUpper)
+				return
+			trackConfig = headerUpper.split('INTERLAGOS')[1].strip()
+		else:
+			if '-' not in headerUpper:
+				self.logger.error('INVALID GRANJA HEADER: %s' % headerUpper)
+				return
+			trackConfig = headerUpper.split('-')[1].strip()
 
-		self.logger.debug('headerbig = "%s"' % headerbig)
-
-		trackConfig = headerbig.split('-')[1].strip()
 		self.logger.debug('trackConfig = "%s"' % trackConfig)
 
 		# get table header
@@ -181,6 +187,7 @@ class GranjaRaceSpider(scrapy.Spider):
 				i += 1
 		
 			raceLoader = ItemLoader(item=GranjaRacesItem(), response=response)
+			raceLoader.add_value('raceType', raceType.upper())
 			raceLoader.add_value('raceId', trimId(raceIdKGV))
 			raceLoader.add_value('raceIdKGV', raceIdKGV)
 			raceLoader.add_value('trackConfig', trackConfig)

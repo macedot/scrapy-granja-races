@@ -6,7 +6,8 @@ declare baseName=$(basename $0)
 declare currentTime=$(date +%Y%m%d_%H%M%S)
 declare WORK_PATH="${HOME}/scrapyGranja"
 declare logFilePath="${WORK_PATH}/log/${baseName}-${currentTime}.log"
-declare PYTHON="python3"
+declare PYTHON=$(which python3)
+declare SCRAPY=$(which scrapy)
 
 function echoInfo {
 	local msg=$1
@@ -47,7 +48,7 @@ if [ ! -z "${BEGIN_RACE}" ]; then
 fi
 echoInfo "================================================================================"
 echoInfo "scrapy crawl granjaRaces ${PARAM}"
-/usr/local/bin/scrapy crawl granjaRaces ${PARAM} 2>&1 | tee -a ${logFilePath}
+$SCRAPY crawl granjaRaces ${PARAM} 2>&1 | tee -a ${logFilePath}
 
 echoInfo "================================================================================"
 echoInfo "$PYTHON granjaUpdateStatistics.py"
