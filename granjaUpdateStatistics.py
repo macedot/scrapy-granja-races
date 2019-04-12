@@ -17,17 +17,8 @@ PATH_GRANJA_DB = './granjaResult.sqlite'
 ################################################################################
 # GLOBAL DEF
 ################################################################################
-
-################################################################################
-################################################################################
-def updateStatistics():
-	func_name = sys._getframe().f_code.co_name
-	logger = logging.getLogger(func_name)
-	logger.debug(PATH_GRANJA_DB)
-
-	dbConnection = sqlite3.connect(PATH_GRANJA_DB)
+def dataCleanup(dbConnection):
 	dbCursor = dbConnection.cursor()
-
 	dbCursor.execute('''UPDATE races SET trackConfig = replace(trackConfig, "CIRUITO", "");''')
 	dbCursor.execute('''UPDATE races SET trackConfig = replace(trackConfig, "CIRCUITO", "");''')
 	dbCursor.execute('''UPDATE races SET trackConfig = replace(trackConfig, "CRICUITO", "");''')
@@ -37,11 +28,12 @@ def updateStatistics():
 
 	dbCursor.execute('''UPDATE races SET trackConfig = replace(trackConfig, "00", "0");''')
 	dbCursor.execute('''UPDATE races SET trackConfig = trim(trackConfig);''')
-
 	dbConnection.commit()
-	
-	####################
 
+################################################################################
+################################################################################
+def createBaseTables(dbConnection, raceType, driverClass):
+	dbCursor = dbConnection.cursor()
 	dbCursor.execute('''DROP TABLE IF EXISTS LAST_RACES;''')
 	dbCursor.execute('''CREATE TABLE LAST_RACES AS
 		SELECT raceId,raceIdKGV,driverClass,trackConfig,COUNT(kartNumber) AS gridSize
@@ -54,7 +46,6 @@ def updateStatistics():
 		GROUP BY raceId 
 		ORDER BY raceId DESC
 		LIMIT 50;''')
-
 	dbCursor.execute('''DROP VIEW IF EXISTS VIEW_LAST_RACES;''')
 	dbCursor.execute('''CREATE VIEW VIEW_LAST_RACES AS 
 		SELECT driverClass
@@ -63,7 +54,6 @@ def updateStatistics():
 			,MAX(raceId) as lastRaceId
 		FROM LAST_RACES
 		GROUP BY driverClass;''')
-
 	dbCursor.execute('''DROP VIEW IF EXISTS VIEW_LAST_RACES_PER_TRACK;''')
 	dbCursor.execute('''CREATE VIEW VIEW_LAST_RACES_PER_TRACK AS 
 		SELECT trackConfig
@@ -73,9 +63,7 @@ def updateStatistics():
 		FROM LAST_RACES
 		WHERE driverClass = 'RENTAL'
 		GROUP BY trackConfig;''')
-
 	####################
-
 	dbCursor.execute('''DROP TABLE IF EXISTS LAST_RACES_RANKING_RENTAL;''')
 	dbCursor.execute('''CREATE TABLE LAST_RACES_RANKING_RENTAL AS
 		SELECT
@@ -90,9 +78,7 @@ def updateStatistics():
 			raceId IN (SELECT raceId FROM LAST_RACES)
 			and driverClass = 'RENTAL'
 		GROUP BY trackConfig;''')
-
 	####################
-
 	dbCursor.execute('''DROP TABLE IF EXISTS RENTAL_RANKING_LAPTIME_C_MODA;''')
 	dbCursor.execute('''CREATE TABLE RENTAL_RANKING_LAPTIME_C_MODA AS
 		SELECT kartNumber, driverName, MIN(bestLapTime) AS 'BEST_LAP', AVG(bestLapTime) AS 'AVG_BEST_LAP'
@@ -109,9 +95,7 @@ def updateStatistics():
 			)
 		GROUP BY kartNumber
 		ORDER BY BEST_LAP;''')
-
 	####################
-
 	dbCursor.execute('''DROP TABLE IF EXISTS ALLTIME_RANKING_LAPTIME;''')
 	dbCursor.execute('''CREATE TABLE ALLTIME_RANKING_LAPTIME AS
 		SELECT
@@ -124,7 +108,6 @@ def updateStatistics():
 			,COUNT(raceId) AS QT_RACES
 		FROM races
 		GROUP BY driverClass,trackConfig;''')
-
 	dbCursor.execute('''DROP TABLE IF EXISTS ALLTIME_RANKING_LAPTIME_RENTAL;''')
 	dbCursor.execute('''CREATE TABLE ALLTIME_RANKING_LAPTIME_RENTAL AS
 		SELECT 
@@ -137,11 +120,13 @@ def updateStatistics():
 		FROM races
 		WHERE driverClass = 'RENTAL'
 		GROUP BY trackConfig;''')
-
+	####################
 	dbConnection.commit()
-	####################
-	# CKC_BI_RENTAL
-	####################
+
+################################################################################
+################################################################################
+def createBITable(dbConnection, raceType, driverClass):
+	dbCursor = dbConnection.cursor()
 	dbCursor.execute('''DROP TABLE IF EXISTS RENTAL_KART_POS_FINISH;''')
 	dbCursor.execute('''CREATE TABLE RENTAL_KART_POS_FINISH AS
 		SELECT kartNumber, racePosition, COUNT(*) AS posCount, SUM(numOfLaps) AS numOfLaps
@@ -149,7 +134,6 @@ def updateStatistics():
 		WHERE raceId IN (SELECT raceId FROM LAST_RACES)
 			AND driverClass='RENTAL' 
 		GROUP BY kartNumber, racePosition;''')
-
 	dbCursor.execute('''DROP TABLE IF EXISTS RENTAL_RANKING_PODIUM;''')
 	dbCursor.execute('''CREATE TABLE RENTAL_RANKING_PODIUM AS
 		SELECT
@@ -176,13 +160,10 @@ def updateStatistics():
 		)
 		WHERE qtRaces > 10
 		ORDER BY PODIUM_RATE DESC;''')
-
 	dbCursor.execute('''CREATE TEMPORARY TABLE IF NOT EXISTS TEMP_RENTAL_RANKING_PODIUM AS
 		SELECT * FROM RENTAL_RANKING_PODIUM A ORDER BY A.PODIUM_RATE DESC;''')
-
 	dbCursor.execute('''CREATE TEMPORARY TABLE IF NOT EXISTS TEMP_RENTAL_RANKING_LAPTIME_C_MODA AS
 		SELECT * FROM RENTAL_RANKING_LAPTIME_C_MODA A ORDER BY A.BEST_LAP ASC;''')
-
 	dbCursor.execute('''DROP TABLE IF EXISTS CKC_BI_RENTAL;''')
 	dbCursor.execute('''CREATE TABLE CKC_BI_RENTAL AS
 		SELECT P.kartNumber
@@ -201,15 +182,30 @@ def updateStatistics():
 			#,0.00625 * (P.rowid + 3 * T.rowid) AS SCORE
 	# 1/(40+40) = .0125
 	# 1/(40+3*40) = .00625
-
+	####################
 	dbConnection.commit()
-	####################
-	####################
+
+################################################################################
+################################################################################
+def updateStatistics():
+	func_name = sys._getframe().f_code.co_name
+	logger = logging.getLogger(func_name)
+	logger.debug(PATH_GRANJA_DB)
+
+	dbConnection = sqlite3.connect(PATH_GRANJA_DB)
+	dataCleanup(dbConnection)
+
+	createBaseTables(dbConnection, 'GRANJA', 'RENTAL')
+	createBITable(dbConnection, 'GRANJA', 'RENTAL')
+	
+	# createBaseTables(dbConnection, 'INTERLAGOS', 'INDOOR')
+	# createBITable(dbConnection, 'INTERLAGOS', 'INDOOR')
+
 	dbConnection.execute('''VACUUM;''')
 	dbConnection.commit()
-	####################
+
 	dbConnection.close()
-	###
+
 	logger.debug("DONE")
 
 def persistLastRaceId():
