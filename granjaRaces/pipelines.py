@@ -28,9 +28,9 @@ DeclarativeBase = declarative_base()
 class GranjaRaces(DeclarativeBase):
 	__tablename__ = "races"
 
-	id = Column('id', Integer, primary_key=True)
-	raceId = Column('raceId', Integer)
-	raceIdKGV = Column('raceIdKGV', Integer)
+	id = Column('id', String, primary_key=True)
+	raceId = Column('raceId', String)
+	raceIdKGV = Column('raceIdKGV', String)
 	trackConfig = Column('trackConfig', String)
 	racePosition = Column('racePosition', Integer)
 	kartNumber = Column('kartNumber', Integer)

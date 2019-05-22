@@ -6,8 +6,8 @@ declare baseName=$(basename $0)
 declare currentTime=$(date +%Y%m%d_%H%M%S)
 declare WORK_PATH="${HOME}/scrapyGranja"
 declare logFilePath="${WORK_PATH}/log/${baseName}-${currentTime}.log"
-declare PYTHON=$(which python3)
-declare SCRAPY=$(which scrapy)
+declare PYTHON="$(which python3)"
+declare SCRAPY="$(which scrapy)"
 
 function echoInfo {
 	local msg=$1
@@ -34,6 +34,10 @@ if [ ! -d "${WORK_PATH}" ]; then
 fi
 
 cd ${WORK_PATH}
+mkdir raceResults &>/dev/null 
+mkdir log &>/dev/null 
+mkdir backup &>/dev/null 
+
 touch ${logFilePath}
 echoInfo "LOG: ${logFilePath}"
 

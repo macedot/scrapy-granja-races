@@ -47,13 +47,13 @@ def getBestLaps(trackConfig):
 				AND trackConfig = '{trackConfig}'
 				AND bestLapTime is not null
 		;''')
-		
+
 		for row in db_cur:
 			resultList.append(row['bestLapTime'])
 		con.close()
 		resultList.sort()
 
-	except (sqlite3.Error, x) as e:
+	except sqlite3.Error as e:
 		if con:
 			con.rollback()
 		logging.error("Error %s:" % e.args[0])
@@ -76,13 +76,13 @@ def getKartBestLaps(kartNumber,trackConfig):
 				AND trackConfig = '{trackConfig}'
 				AND bestLapTime is not null
 		;''')
-		
+
 		for row in db_cur:
 			resultList.append(row['bestLapTime'])
 		con.close()
 		resultList.sort()
 
-	except (sqlite3.Error, x) as e:
+	except sqlite3.Error as e:
 		if con:
 			con.rollback()
 		logging.error("Error %s:" % e.args[0])
@@ -106,7 +106,7 @@ def getTrackConfigModa():
 		ORDER BY QT DESC
 		LIMIT 1
 		;''')
-		
+
 		for row in db_cur:
 			resultValue = row['trackConfig']
 			break
@@ -138,7 +138,7 @@ def getKartList(trackConfig):
 			ORDER BY kartNumber
 		-- ) WHERE QT > 10
 		;''')
-		
+
 		for row in db_cur:
 			resultList.append(row['kartNumber'])
 		con.close()
@@ -155,6 +155,7 @@ def getKartList(trackConfig):
 def tableData2Html(tableName):
 	htmlcode = """<html><head><title>%s</title><link href="/static/style.css" rel="stylesheet"></head>
 	<body><div style="align:center; font:bold 10pt Verdana; width:100%%;">%s</div>""" % (tableName,tableName)
+	htmlcodemin = ""
 
 	try:
 		con = sqlite3.connect(PATH_GRANJA_DB)
@@ -171,7 +172,7 @@ def tableData2Html(tableName):
 		htmlcodemin = htmlcodemin.replace('</th></tr>', '</th></tr></thead>')
 		htmlcodemin = htmlcodemin.replace('<th>', '<th class="sort-header">')
 		htmlcodemin = re.sub(r'\bNone\b', '0', htmlcodemin)
-	except (sqlite3.Error, x) as e:
+	except sqlite3.Error as e:
 		if con:
 			con.rollback()
 		logging.error("Error %s:" % e.args[0])
@@ -315,7 +316,7 @@ class granjaView(object):
 			lower_bound = quartile_1 - (iqr * 0.75)
 			listLapF = [i for i in dictLaps[kartNumber] if i>= lower_bound]
 			dictSort[kartNumber] = min(listLapF)
-		
+
 		xvalues = []
 		bestLapList = []
 		for kartNumber, theMedian in sorted(dictSort.items(), key=lambda x: x[1], reverse=True):
@@ -354,6 +355,7 @@ class granjaView(object):
 if __name__ == '__main__':
 	cherrypy.config.update({'server.socket_host': '0.0.0.0'})
 	cherrypy.config.update({'server.socket_port': 8080})
+	cherrypy.config.update({'server.thread_pool': 4})
 	conf = {
 		'/': {
 			# # 'tools.sessions.on': True,

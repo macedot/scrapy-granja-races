@@ -223,7 +223,7 @@ def persistLastRaceId():
 	with open(filename, 'wb') as file:
 		file.write(str.encode("{}\n".format(result['lastRaceId'])))
 
-	logger.info("LAST RACE ID = %d" % result['lastRaceId'])
+	logger.info("LAST RACE ID = %s" % result['lastRaceId'])
 	
 ################################################################################
 # MAIN

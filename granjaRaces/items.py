@@ -40,15 +40,15 @@ class GranjaRacesItem(scrapy.Item):
 	# class RaceEntry(scrapy.Item):
 	# [u'POS', u'NO.', u'NOME', u'CLASSE', u'COMENT\xc1RIOS', u'PONTOS', u'VOLTAS', u'TOTAL TEMPO', u'MELHOR TEMPO', u'DIFF', u'ESPA\xc7O']
 	id = scrapy.Field(
-        input_processor=MapCompose(int),
+        input_processor=MapCompose(str),
         output_processor=TakeFirst(),
     )
 	raceId = scrapy.Field(
-        input_processor=MapCompose(int),
+        input_processor=MapCompose(str),
         output_processor=TakeFirst(),
     )
 	raceIdKGV = scrapy.Field(
-        input_processor=MapCompose(int),
+        input_processor=MapCompose(str),
         output_processor=TakeFirst(),
     )
 	trackConfig = scrapy.Field(
