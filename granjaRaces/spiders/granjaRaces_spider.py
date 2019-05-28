@@ -1,6 +1,7 @@
 import scrapy
 import re
 import os
+import datetime
 from scrapy.loader import ItemLoader
 from granjaRaces.items import GranjaRacesItem
 
@@ -37,6 +38,12 @@ First Race in 2019
 - Some new Race Ids are bigger than 16 digits, which compromises comparison.
   Thus, some trim is needed BUT ONLY when comparing for filter purposes."""
 
+
+now = datetime.datetime.now()
+# print "Current year: %d" % now.year
+# print "Current month: %d" % now.month
+# print "Current day: %d" % now.day
+
 # def trimId(i):
 # 	return int('{}'.format(i)[:16])
 
@@ -65,7 +72,11 @@ class GranjaRaceSpider(scrapy.Spider):
 
 	def start_requests(self):
 		#return [scrapy.Request('http://www.kgv.net.br/resultados/Default.aspx', callback = self.result_list)]
-		return [scrapy.Request('http://kartodromogranjaviana.com.br/resultados/?flt_tipo=rental', callback = self.result_list)]
+		#http://kartodromogranjaviana.com.br/resultados/?flt_ano=2019&flt_mes=5&flt_dia=27&flt_tipo=rental
+		#return [scrapy.Request('http://kartodromogranjaviana.com.br/resultados/?flt_tipo=rental', callback = self.result_list)]
+		urlResults = 'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_dia=%d&flt_tipo=rental' % (now.year, now.month, now.day);
+		self.logger.debug('urlResults -> ' + urlResults)
+		return [scrapy.Request(urlResults, callback = self.result_list)]
 
 	def result_list(self, response):
 		"""
