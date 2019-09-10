@@ -13,7 +13,7 @@ from granjaRaces.items import GranjaRacesItem
 #		MIN_RACE_ID = 36612
 # TRIVIA 2 2017-03-13:
 #	Seems that Granja is running different track layouts/configuration
-#	using the same 'CIRCUITO XX' identifier. Since the physical track layout 
+#	using the same 'CIRCUITO XX' identifier. Since the physical track layout
 #	have changed a lot, some new layout possibilities will be possible,
 #	and 'CIRCUITO xx' definitions will be reset. We need to monitor their data
 #	and estabilish this a new MIN_RACE_ID when this reset occurs.
@@ -27,14 +27,14 @@ Example of url at resulting page:
 Example DIRECT ACCESS result page:
 	http://www.kgv.net.br/Arquivos/KGV-G-20190117001238969-Rental-Resultado.html
 	-> Granja viana + Standard rental kart
-	
+
 	http://www.kgv.net.br/Arquivos/KGV-G-20190116232555125-Interlagos-Resultado.html
 	-> Interlagos + Standard rental kart
 
 First Race in 2019
 	http://www.kgv.net.br/Arquivos/KGV-G-20190103174040999-Rental-Resultado.html
 
-	
+
 - Some new Race Ids are bigger than 16 digits, which compromises comparison.
   Thus, some trim is needed BUT ONLY when comparing for filter purposes."""
 
@@ -75,7 +75,8 @@ class GranjaRaceSpider(scrapy.Spider):
 		#http://kartodromogranjaviana.com.br/resultados/?flt_ano=2019&flt_mes=5&flt_dia=27&flt_tipo=rental
 		#return [scrapy.Request('http://kartodromogranjaviana.com.br/resultados/?flt_tipo=rental', callback = self.result_list)]
 		urlResults = 'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_dia=%d&flt_tipo=rental' % (now.year, now.month, now.day);
-		self.logger.debug('urlResults -> ' + urlResults)
+		#urlResults = 'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month);
+		self.logger.info('urlResults -> ' + urlResults)
 		return [scrapy.Request(urlResults, callback = self.result_list)]
 
 	def result_list(self, response):
@@ -90,8 +91,8 @@ class GranjaRaceSpider(scrapy.Spider):
 			&day=Todos
 
 
-		http://kartodromogranjaviana.com.br/resultados/folha/?uid=675aab086170c00367de344474dbb5ea&parte=prova			
-		""" 
+		http://kartodromogranjaviana.com.br/resultados/folha/?uid=675aab086170c00367de344474dbb5ea&parte=prova
+		"""
 
 		# self.logger.debug(' RESPONSE: ' + response.body.decode("utf-8"))
 		# return
@@ -109,7 +110,7 @@ class GranjaRaceSpider(scrapy.Spider):
 
 		#self.logger.info('Number of RAW races at result page: %i', len(raceIdList_raw))
 		self.logger.info('Number of RAW races at result page: %i', len(list_raw))
-		
+
 		# firstRaceId = int(getattr(self, 'begin', MIN_RACE_ID)) # us AS IS (dont trim here!)
 		# self.logger.info('PARAM firstRaceId = {}'.format(firstRaceId))
 		# if firstRaceId < MIN_RACE_ID:
@@ -142,7 +143,7 @@ class GranjaRaceSpider(scrapy.Spider):
 			return
 
 		responseUpper = response.text.upper()
-		self.logger.debug('response.text = [' + responseUpper + ']')
+		#self.logger.debug('response.text = [' + responseUpper + ']')
 
 		# if 'INTERLAGOS' in raceType.upper():
 		# 	# discart INTERLAGOS races (for now...)
@@ -158,7 +159,7 @@ class GranjaRaceSpider(scrapy.Spider):
 		if 'RENTAL' not in responseUpper:
 			self.logger.warning('Skipping RACE (Not RENTAL): ' + raceIdKGV)
 			return
-			
+
 		self.logger.info('Scrapping RACE: %s' % raceIdKGV)
 		self.persistToFile(raceIdKGV, response)
 
@@ -170,7 +171,7 @@ class GranjaRaceSpider(scrapy.Spider):
 		if headerbig is None:
 			self.logger.error('Missing headerbig (%s)' % raceIdKGV)
 			return
-		
+
 		headerUpper = headerbig.upper()
 		# if 'INTERLAGOS' in raceType.upper():
 		# 	# discart INTERLAGOS races (for now...)
@@ -184,9 +185,12 @@ class GranjaRaceSpider(scrapy.Spider):
 		# 		return
 		# 	trackConfig = headerUpper.split('-')[1].strip()
 		if '-' not in headerUpper:
-			self.logger.error('INVALID GRANJA HEADER: %s' % headerUpper)
-			return
-		trackConfig = headerUpper.split('-')[1].strip()
+			if 'CIRCUITO' not in headerUpper:
+				self.logger.error('INVALID GRANJA HEADER: %s' % headerUpper)
+				return
+			trackConfig = 'CIRCUITO ' + headerUpper.split('CIRCUITO')[1].strip()
+		else:
+			trackConfig = headerUpper.split('-')[1].strip()
 
 		self.logger.debug('trackConfig = "%s"' % trackConfig)
 
@@ -213,7 +217,7 @@ class GranjaRaceSpider(scrapy.Spider):
 					value = line.xpath('td[%i]/text()' % i).extract_first()
 					raceEntryData[key] = value
 				i += 1
-		
+
 			raceLoader = ItemLoader(item=GranjaRacesItem(), response=response)
 			raceLoader.add_value('raceType', raceType.upper())
 			#raceLoader.add_value('raceId', trimId(raceIdKGV))
