@@ -70,14 +70,40 @@ DICT_HEADER = {
 class GranjaRaceSpider(scrapy.Spider):
 	name = 'granjaRaces'
 
+	# def start_requests(self):
+	#     urls = [
+	#         'https://getbootstrap.com/docs/4.0/content/tables/',
+	#     ]
+	#     for url in urls:
+	#         yield scrapy.Request(url=url, callback=self.parse)
+
 	def start_requests(self):
 		#return [scrapy.Request('http://www.kgv.net.br/resultados/Default.aspx', callback = self.result_list)]
 		#http://kartodromogranjaviana.com.br/resultados/?flt_ano=2019&flt_mes=5&flt_dia=27&flt_tipo=rental
 		#return [scrapy.Request('http://kartodromogranjaviana.com.br/resultados/?flt_tipo=rental', callback = self.result_list)]
-		urlResults = 'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_dia=%d&flt_tipo=rental' % (now.year, now.month, now.day);
-		#urlResults = 'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month);
-		self.logger.info('urlResults -> ' + urlResults)
-		return [scrapy.Request(urlResults, callback = self.result_list)]
+		#urlResults = 'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_dia=%d&flt_tipo=rental' % (now.year, now.month, now.day);
+		#urlResults = 'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month-2);
+		#urlResults = 'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_tipo=rental' % (now.year);
+		urls = [
+			#'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_dia=%d&flt_tipo=rental' % (now.year, now.month, now.day),
+			'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month),
+			'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month-1),
+			'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month-2),
+			'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month-3),
+		]
+		# self.logger.info('urlResults -> ' + urlResults)
+		#return [scrapy.Request(urlResults, callback = self.result_list)]
+		for url in urls:
+			self.logger.info('urlResults -> ' + url)
+			yield scrapy.Request(url=url, callback=self.result_list)
+
+	# def parse(self, response):
+	# 		for row in response.xpath('//*[@class="table table-striped"]//tbody/tr'):
+	# 			yield {
+	# 				'first' : row.xpath('td[1]//text()').extract_first(),
+	# 				'last': row.xpath('td[2]//text()').extract_first(),
+	# 				'handle' : row.xpath('td[3]//text()').extract_first(),
+	# 			}
 
 	def result_list(self, response):
 		"""
@@ -89,7 +115,6 @@ class GranjaRaceSpider(scrapy.Spider):
 			&year=2019
 			&month=Janeiro
 			&day=Todos
-
 
 		http://kartodromogranjaviana.com.br/resultados/folha/?uid=675aab086170c00367de344474dbb5ea&parte=prova
 		"""
@@ -125,13 +150,29 @@ class GranjaRaceSpider(scrapy.Spider):
 		# 		self.logger.debug('yielding a start url: %s' % url)
 		# 		yield scrapy.Request(url, callback=self.parse)
 
-		for raceIdKGV in list_raw:
+		# for raceIdKGV in list_raw:
+		# 	url = 'http://kartodromogranjaviana.com.br/resultados/folha/?uid=%s&parte=prova' % (raceIdKGV)
+		# 	self.logger.debug('yielding a start url: %s' % url)
+		# 	yield scrapy.Request(url, callback=self.parse, cb_kwargs={'raceDate': raceDate})
+
+		#for raceIdKGV in list_raw:
+		for row in response.xpath('//*[@class="tb-results"]//tr')[1:]:
+			# yield {
+			# 	'first' : row.xpath('td[1]//text()').extract_first(),
+			# 	'last': row.xpath('td[2]//text()').extract_first(),
+			# 	'handle' : row.xpath('td[3]//text()').extract_first(),
+			# }
+			day,month = row.xpath('td[1]//text()').extract_first().split('/', 1)
+			hour,minute = row.xpath('td[2]//text()').extract_first().split(':', 1)
+			raceDate = now.year * 10000 + int(month) * 100 + int(day)
+			raceTime = int(hour) * 100 + int(minute)
+			raceDateTime = "{:08d}_{:04d}".format(raceDate, raceTime)
+			raceIdKGV = row.css('a').re(r'folha\/\?uid=(.+)\&amp;parte=prova')[0]
 			url = 'http://kartodromogranjaviana.com.br/resultados/folha/?uid=%s&parte=prova' % (raceIdKGV)
-			self.logger.debug('yielding a start url: %s' % url)
-			yield scrapy.Request(url, callback=self.parse)
+			self.logger.info('yielding "%s - %s" with a start url: %s' % (raceDateTime, raceIdKGV, url))
+			yield scrapy.Request(url, callback=self.parse, cb_kwargs={'raceDateTime': raceDateTime})
 
-
-	def parse(self, response):
+	def parse(self, response, raceDateTime):
 		self.logger.debug('response.url = [' + response.url + ']')
 
 		try:
@@ -219,6 +260,7 @@ class GranjaRaceSpider(scrapy.Spider):
 				i += 1
 
 			raceLoader = ItemLoader(item=GranjaRacesItem(), response=response)
+			raceLoader.add_value('raceDateTime', raceDateTime)
 			raceLoader.add_value('raceType', raceType.upper())
 			#raceLoader.add_value('raceId', trimId(raceIdKGV))
 			raceLoader.add_value('raceId', raceIdKGV)

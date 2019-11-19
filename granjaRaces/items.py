@@ -43,6 +43,10 @@ class GranjaRacesItem(scrapy.Item):
         input_processor=MapCompose(str),
         output_processor=TakeFirst(),
     )
+	raceDateTime = scrapy.Field(
+        input_processor=MapCompose(str),
+        output_processor=TakeFirst(),
+    )
 	raceId = scrapy.Field(
         input_processor=MapCompose(str),
         output_processor=TakeFirst(),

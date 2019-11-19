@@ -38,16 +38,16 @@ def createBaseTables(dbConnection, raceType, driverClass):
 	dbCursor.execute('''CREATE TABLE LAST_RACES AS
 		SELECT raceId,raceIdKGV,driverClass,trackConfig,COUNT(kartNumber) AS gridSize
 		FROM races
-		WHERE 
+		WHERE
 			driverClass = 'RENTAL'
 			AND bestLapTime IS NOT NULL
 			AND trackConfig IS NOT NULL
 			AND trackConfig != ''
-		GROUP BY raceId 
-		ORDER BY raceId DESC
+		GROUP BY raceId
+		ORDER BY raceDateTime DESC
 		LIMIT 50;''')
 	dbCursor.execute('''DROP VIEW IF EXISTS VIEW_LAST_RACES;''')
-	dbCursor.execute('''CREATE VIEW VIEW_LAST_RACES AS 
+	dbCursor.execute('''CREATE VIEW VIEW_LAST_RACES AS
 		SELECT driverClass
 			,COUNT(raceId) AS QT_RACES
 			,raceIdKGV
@@ -55,7 +55,7 @@ def createBaseTables(dbConnection, raceType, driverClass):
 		FROM LAST_RACES
 		GROUP BY driverClass;''')
 	dbCursor.execute('''DROP VIEW IF EXISTS VIEW_LAST_RACES_PER_TRACK;''')
-	dbCursor.execute('''CREATE VIEW VIEW_LAST_RACES_PER_TRACK AS 
+	dbCursor.execute('''CREATE VIEW VIEW_LAST_RACES_PER_TRACK AS
 		SELECT trackConfig
 			,COUNT(raceId) AS QT_RACES
 			,raceIdKGV
@@ -83,14 +83,14 @@ def createBaseTables(dbConnection, raceType, driverClass):
 	dbCursor.execute('''CREATE TABLE RENTAL_RANKING_LAPTIME_C_MODA AS
 		SELECT kartNumber, driverName, MIN(bestLapTime) AS 'BEST_LAP', AVG(bestLapTime) AS 'AVG_BEST_LAP'
 		FROM races
-		WHERE 
+		WHERE
 			raceId IN (SELECT raceId FROM LAST_RACES)
 			AND trackConfig IN (
-				SELECT trackConfig 
+				SELECT trackConfig
 				FROM VIEW_LAST_RACES_PER_TRACK
-				WHERE driverClass = 'RENTAL' 
-				GROUP BY trackConfig 
-				ORDER BY QT_RACES DESC 
+				WHERE driverClass = 'RENTAL'
+				GROUP BY trackConfig
+				ORDER BY QT_RACES DESC
 				LIMIT 1
 			)
 		GROUP BY kartNumber
@@ -110,7 +110,7 @@ def createBaseTables(dbConnection, raceType, driverClass):
 		GROUP BY driverClass,trackConfig;''')
 	dbCursor.execute('''DROP TABLE IF EXISTS ALLTIME_RANKING_LAPTIME_RENTAL;''')
 	dbCursor.execute('''CREATE TABLE ALLTIME_RANKING_LAPTIME_RENTAL AS
-		SELECT 
+		SELECT
 			trackConfig
 			,driverName
 			,raceIdKGV
@@ -132,7 +132,7 @@ def createBITable(dbConnection, raceType, driverClass):
 		SELECT kartNumber, racePosition, COUNT(*) AS posCount, SUM(numOfLaps) AS numOfLaps
 		FROM races
 		WHERE raceId IN (SELECT raceId FROM LAST_RACES)
-			AND driverClass='RENTAL' 
+			AND driverClass='RENTAL'
 		GROUP BY kartNumber, racePosition;''')
 	dbCursor.execute('''DROP TABLE IF EXISTS RENTAL_RANKING_PODIUM;''')
 	dbCursor.execute('''CREATE TABLE RENTAL_RANKING_PODIUM AS
@@ -197,7 +197,7 @@ def updateStatistics():
 
 	createBaseTables(dbConnection, 'GRANJA', 'RENTAL')
 	createBITable(dbConnection, 'GRANJA', 'RENTAL')
-	
+
 	# createBaseTables(dbConnection, 'INTERLAGOS', 'INDOOR')
 	# createBITable(dbConnection, 'INTERLAGOS', 'INDOOR')
 
@@ -224,7 +224,7 @@ def persistLastRaceId():
 		file.write(str.encode("{}\n".format(result['lastRaceId'])))
 
 	logger.info("LAST RACE ID = %s" % result['lastRaceId'])
-	
+
 ################################################################################
 # MAIN
 ################################################################################

@@ -29,6 +29,7 @@ class GranjaRaces(DeclarativeBase):
 	__tablename__ = "races"
 
 	id = Column('id', String, primary_key=True)
+	raceDateTime = Column('raceDateTime', String)
 	raceId = Column('raceId', String)
 	raceIdKGV = Column('raceIdKGV', String)
 	trackConfig = Column('trackConfig', String)
@@ -44,7 +45,7 @@ class GranjaRaces(DeclarativeBase):
 	bestLapTime = Column('bestLapTime', Float)
 	# diffToLeader = Column('diffToLeader', Float)
 	# diffToPrevious = Column('diffToPrevious', Float)
-	
+
 	def __repr__(self):
 		return "<GranjaRaces({}_{})>".format(self.raceId, self.racePosition)
 
@@ -99,4 +100,3 @@ class GranjaRacesPipeline(object):
 # class GranjaRacesPipeline(object):
 	# def process_item(self, item, spider):
 		# return item
-
