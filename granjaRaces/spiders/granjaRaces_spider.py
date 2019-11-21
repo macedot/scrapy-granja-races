@@ -85,11 +85,11 @@ class GranjaRaceSpider(scrapy.Spider):
 		#urlResults = 'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month-2);
 		#urlResults = 'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_tipo=rental' % (now.year);
 		urls = [
-			#'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_dia=%d&flt_tipo=rental' % (now.year, now.month, now.day),
-			'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month),
-			'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month-1),
-			'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month-2),
-			'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month-3),
+			'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_dia=%d&flt_tipo=rental' % (now.year, now.month, now.day),
+			#'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month),
+			#'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month-1),
+			#'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month-2),
+			#'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month-3),
 		]
 		# self.logger.info('urlResults -> ' + urlResults)
 		#return [scrapy.Request(urlResults, callback = self.result_list)]
