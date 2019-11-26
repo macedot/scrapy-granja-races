@@ -46,11 +46,11 @@ echoInfo "======================================================================
 echoInfo "tar zcfv ${WORK_PATH}/backup/${currentTime}.tgz ${WORK_PATH}/*.sqlite"
 tar zcfv ${WORK_PATH}/backup/${currentTime}.tgz ${WORK_PATH}/*.sqlite 2>&1 | tee -a ${logFilePath}
 
-BEGIN_RACE=$(cat ${WORK_PATH}/lastRaceId 2>/dev/null)
 PARAM="$*"
-if [ ! -z "${BEGIN_RACE}" ]; then
-	PARAM="-a begin=$BEGIN_RACE ${PARAM}"
-fi
+#BEGIN_RACE=$(cat ${WORK_PATH}/lastRaceId 2>/dev/null)
+#if [ ! -z "${BEGIN_RACE}" ]; then
+#	PARAM="-a begin=$BEGIN_RACE ${PARAM}"
+#fi
 echoInfo "================================================================================"
 echoInfo "scrapy crawl granjaRaces ${PARAM}"
 $SCRAPY crawl granjaRaces ${PARAM} 2>&1 | tee -a ${logFilePath}

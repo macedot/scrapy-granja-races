@@ -241,7 +241,7 @@ def main():
 	logger.info('Started')
 	###
 	updateStatistics()
-	persistLastRaceId()
+	#persistLastRaceId()
 	###
 	logger.info('Finished')
 
