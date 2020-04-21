@@ -9,9 +9,10 @@ import scrapy
 from scrapy.loader.processors import MapCompose, TakeFirst
 
 def intCheckDQ(str):
-	if 'Não completou' in str or 'DQ' in str or 'Não largou' in str:
-		return 99
-	return int(str)
+  try:
+    return int(str)
+  except:
+    return 99
 
 def strRaceType(str):
 	if 'INTERLAGOS' in str:

@@ -42,17 +42,32 @@ touch ${logFilePath}
 echoInfo "LOG: ${logFilePath}"
 
 echoInfo "================================================================================"
-echoInfo "tar zcfv ${WORK_PATH}/backup/${currentTime}.tgz ${WORK_PATH}/*.sqlite"
-tar zcfv ${WORK_PATH}/backup/${currentTime}.tgz ${WORK_PATH}/*.sqlite 2>&1 | tee -a ${logFilePath}
+echoInfo "7z a ${WORK_PATH}/backup/${currentTime}.7z ${WORK_PATH}/*.sqlite"
+7z a ${WORK_PATH}/backup/${currentTime}.7z ${WORK_PATH}/*.sqlite 2>&1 | tee -a ${logFilePath}
 
 PARAM="$*"
 echoInfo "================================================================================"
-echoInfo "scrapy crawl granjaRaces ${PARAM}"
+echoInfo "${SCRAPY} crawl granjaRaces ${PARAM}"
 $SCRAPY crawl granjaRaces ${PARAM} 2>&1 | tee -a ${logFilePath}
 
 echoInfo "================================================================================"
 echoInfo "$PYTHON granjaUpdateStatistics.py"
 $PYTHON $WORK_PATH/granjaUpdateStatistics.py 2>&1 | tee -a ${logFilePath}
+
+echoInfo "================================================================================"
+dbFile=$(ls *.sqlite)
+dbFileName=$(basename ${dbFile})
+7z a ${WORK_PATH}/${dbFileName}.7z ${WORK_PATH}/*.sqlite 2>&1 | tee -a ${logFilePath}
+
+msg="UPDATE `date --rfc-3339=seconds`"
+echoInfo "================================================================================"
+echoInfo "# GIT COMMIT: '${msg}'"
+git commit --amend --all --message="${msg}"
+
+echoInfo "================================================================================"
+echoInfo "# GIT PUSH"
+killall ssh-agent ;eval "$(ssh-agent -s)" && ssh-add ~/.ssh/id_ed25519
+git push
 
 # Job is done!
 echoInfo "================================================================================"

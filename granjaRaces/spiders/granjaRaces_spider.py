@@ -30,6 +30,7 @@ class GranjaRaceSpider(scrapy.Spider):
 	def start_requests(self):
 		urls = [
 			'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_dia=%d&flt_tipo=rental' % (now.year, now.month, now.day),
+			#'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_dia=%d&flt_tipo=rental' % (2020, 3, 21),
 			#'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month),
 			#'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month-1),
 			#'http://kartodromogranjaviana.com.br/resultados/?flt_ano=%d&flt_mes=%d&flt_tipo=rental' % (now.year, now.month-2),
