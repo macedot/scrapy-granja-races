@@ -62,7 +62,10 @@ dbFileName=$(basename ${dbFile})
 msg="UPDATE `date --rfc-3339=seconds`"
 echoInfo "================================================================================"
 echoInfo "# GIT COMMIT: '${msg}'"
-git commit --amend --all --message="${msg}"
+git add "${WORK_PATH}/${dbFileName}.7z"
+#git commit --amend --all --message="${msg}"
+git commit --all --message="${msg}"
+git push
 
 echoInfo "================================================================================"
 echoInfo "# GIT PUSH"
