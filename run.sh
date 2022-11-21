@@ -5,6 +5,15 @@ export PATH=".:$HOME:$PATH"
 declare baseName=$(basename $0)
 declare currentTime=$(date +%Y%m%d_%H%M%S)
 declare WORK_PATH="$(dirname $0)"
+
+# Get ready to work
+if [ ! -d "${WORK_PATH}" ]; then
+	echoError "Invalid WORK_PATH : ${WORK_PATH}" 1>&2
+	exit 1
+fi
+
+source ${WORK_PATH}/venv/bin/activate
+
 declare logFilePath="${WORK_PATH}/log/${baseName}-${currentTime}.log"
 declare PYTHON="$(which python3)"
 declare SCRAPY="$(which scrapy)"
@@ -27,16 +36,10 @@ function echoError {
 	return 0
 }
 
-# Get ready to work
-if [ ! -d "${WORK_PATH}" ]; then
-	echoError "Invalid WORK_PATH : ${WORK_PATH}" 1>&2
-	exit 1
-fi
-
 cd ${WORK_PATH}
 mkdir raceResults &>/dev/null
-mkdir log &>/dev/null
 mkdir backup &>/dev/null
+mkdir log &>/dev/null
 
 touch ${logFilePath}
 echoInfo "LOG: ${logFilePath}"
@@ -65,11 +68,10 @@ echoInfo "# GIT COMMIT: '${msg}'"
 git add "${WORK_PATH}/${dbFileName}.7z"
 #git commit --amend --all --message="${msg}"
 git commit --all --message="${msg}"
-git push
 
 echoInfo "================================================================================"
 echoInfo "# GIT PUSH"
-killall ssh-agent ;eval "$(ssh-agent -s)" && ssh-add ~/.ssh/id_ed25519
+#killall ssh-agent ;eval "$(ssh-agent -s)" && ssh-add ~/.ssh/id_ed25519
 git push
 
 # Job is done!
