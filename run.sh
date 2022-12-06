@@ -15,7 +15,7 @@ fi
 source ${WORK_PATH}/venv/bin/activate
 
 declare logFilePath="${WORK_PATH}/log/${baseName}-${currentTime}.log"
-declare PYTHON="$(which python3)"
+declare PYTHON="$(which python)"
 declare SCRAPY="$(which scrapy)"
 
 function echoInfo {
